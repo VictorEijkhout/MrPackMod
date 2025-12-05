@@ -13,4 +13,5 @@ def read_config():
             key = key.lower(); val = val.strip('\n')
             #print(key,val)
             configuration_dict[key] = val
-    print(configuration_dict)
+    #print(configuration_dict)
+    return configuration_dict
