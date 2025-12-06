@@ -43,9 +43,11 @@ def download_from_url( **kwargs, ):
     cmdline=f"wget {url}"
     process.process_execute( cmdline,logfile=downloadlog,terminal=None )
 
-def unpack_from_url( url,srcdir=None,**kwargs ):
-    url = kwargs.get( "download" )
+def unpack_from_url( **kwargs ):
+    url          = kwargs.get( "download" )
+    srcdir       = kwargs.get("srcdir")
     downloadlog  = kwargs.pop( "logfile",open( f"{os.getcwd()}/unpack.log","w" ) )
+    ## downloadpath = ???
     cd_download_path( **kwargs,logfile=downloadlog )
     echo_string( f"Unpacking in {os.getcwd()}",logfile=downloadlog )
     file = re.sub( r'.*/','',url )
