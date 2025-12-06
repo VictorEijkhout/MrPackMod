@@ -10,7 +10,7 @@ import re
 # my own modules
 #
 import process
-from process import echo_string
+from process import echo_string,abort_on_zero_keyword
 import names
 
 def cd_download_path( **kwargs ):
@@ -32,7 +32,7 @@ def cd_download_path( **kwargs ):
         os.chdir(homedir)
 
 def download_from_url( **kwargs, ):
-    url = kwargs.get( "download" )
+    url = abort_on_zero_keyword( "downloadurl",**kwargs )
     downloadlog  = kwargs.pop( "logfile",open( f"{os.getcwd()}/download.log","w" ) )
     cd_download_path( **kwargs,logfile=downloadlog )
     if url == "":
@@ -44,7 +44,7 @@ def download_from_url( **kwargs, ):
     process.process_execute( cmdline,logfile=downloadlog,terminal=None )
 
 def unpack_from_url( **kwargs ):
-    url          = kwargs.get( "download" )
+    url          = kwargs.get( "downloadurl" )
     srcdir       = kwargs.get("srcdir")
     downloadlog  = kwargs.pop( "logfile",open( f"{os.getcwd()}/unpack.log","w" ) )
     ## downloadpath = ???

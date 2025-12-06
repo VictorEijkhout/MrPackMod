@@ -14,10 +14,9 @@ from MrPackMod import info as info
 from MrPackMod import modules as modules
 from MrPackMod import names as names
 
-configuration = config.read_config()
-print(configuration)
 def mpm(args):
-    global configuration
+    configuration = config.read_config()
+    print(configuration)
     for action in args:
         print( f"Action: {action}" )
         if False:
@@ -28,6 +27,7 @@ def mpm(args):
             modules.test_modules( **configuration )
         elif action=="download":
             download.download_from_url( **configuration )
+        elif action=="unpack":
             packagebasename,packageversion = names.packagenames( **configuration )
             srcdir=f"{packagebasename}-{packageversion}"
             download.unpack_from_url(
@@ -39,4 +39,4 @@ def mpm(args):
             prefixdir = names.prefixdir_name( **configuration )
             print(prefixdir)
 
-mpm( args )
+mpm( args.split() )
