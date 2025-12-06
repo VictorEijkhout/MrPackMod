@@ -6,6 +6,8 @@ def read_config():
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
         'compiler':os.getenv("TACC_FAMILY_COMPILER","UNKNOWN_COMPILER"),
         'root':os.getenv("PACKAGEROOT",os.getenv("HOME")),
+        # default value:
+        'buildsystem':"cmake",
     }
     macros = {}
     with open("Configuration","r") as configuration_file:
