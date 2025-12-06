@@ -11,10 +11,15 @@ import re
 #
 import names
 import process
-from process import echo_string
+from process import echo_string,abort_on_zero_keyword
+
 
 def list_installations( **kwargs ):
-    homedir = names.create_homedir( **kwargs ) # root=root,package=package, )
-    dirs = [ d for d in os.listdir(homedir) if os.path.isdir(d) and re.match( 'installation',d ) ]
-    echo_string( f"Found installations in homedir {homedir}\n{dirs}" )
+    installroot = abort_on_zero_keyword( "installroot",**kwargs )
+    package     = abort_on_zero_keyword( "package",**kwargs ).lower()
+    dirs = [ d for d in os.listdir(installroot)
+             if os.path.isdir( f"{installroot}/{d}" )
+             and re.match( f"installation-{package}",d )
+             ]
+    echo_string( f"Found installations in installroot {installroot}\n{dirs}" )
     

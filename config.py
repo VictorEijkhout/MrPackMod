@@ -1,3 +1,6 @@
+##
+## standard python modules
+##
 import re
 import os
 
@@ -6,6 +9,7 @@ def read_config():
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
         'compiler':os.getenv("TACC_FAMILY_COMPILER","UNKNOWN_COMPILER"),
         'root':os.getenv("PACKAGEROOT",os.getenv("HOME")),
+        'installroot':os.getenv("INSTALLROOT","NO_INSTALLROOT_GIVEN"),
         # default value:
         'buildsystem':"cmake",
     }

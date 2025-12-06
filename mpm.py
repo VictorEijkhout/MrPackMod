@@ -24,7 +24,7 @@ from MrPackMod import names as names
 
 def mpm(args):
     configuration = config.read_config()
-    #print(configuration)
+    print(configuration)
     for action in args:
         print( f"Action: {action}" )
         if action=="help":
