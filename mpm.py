@@ -12,7 +12,7 @@ def usage(program):
 if len(args)==1:
     usage; sys.exit(0)
 program = args[0]
-args = args[1]
+args = args[1:]
 
 import MrPackMod.config
 from MrPackMod import config as config
@@ -36,17 +36,15 @@ def mpm(args):
         elif action=="download":
             download.download_from_url( **configuration )
         elif action=="unpack":
-            packagebasename,packageversion = names.packagenames( **configuration )
-            srcdir=f"{packagebasename}-{packageversion}"
-            download.unpack_from_url(
-                srcdir=srcdir,
-                **configuration )
+            srcdir_local = names.srcdir_local_name( **configuration )
+            download.unpack_from_url( srcdir=srcdir_local,**configuration )
         elif action=="configure":
-            builddir = names.builddir_name( **configuration )
-            print(builddir)
-            prefixdir = names.prefixdir_name( **configuration )
-            print(prefixdir)
-            if configuration["buildsystem"].lower() == "cmake":
+            if ( system := configuration["buildsystem"].lower() ) == "cmake":
                 install.cmake_configure( **configuration )
+            else: raise Exception( f"Can only configure for cmake, not: {system}" )
+        elif action=="build":
+            if ( system := configuration["buildsystem"].lower() ) == "cmake":
+                install.cmake_build( **configuration )
+            else: raise Exception( f"Can only build for cmake, not: {system}" )
                 
-mpm( args.split() )
+mpm( args )

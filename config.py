@@ -11,7 +11,7 @@ def read_config():
         'root':os.getenv("PACKAGEROOT",os.getenv("HOME")),
         'installroot':os.getenv("INSTALLROOT","NO_INSTALLROOT_GIVEN"),
         # default value:
-        'buildsystem':"cmake",
+        'buildsystem':"cmake", 
     }
     macros = {}
     with open("Configuration","r") as configuration_file:

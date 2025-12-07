@@ -105,6 +105,16 @@ def install_extension( **kwargs ):
         installext = f"{installext}-{variant}"
     return installext
 
+def srcdir_local_name( **kwargs ):
+    packagebasename,packageversion = packagenames( **kwargs )
+    return f"{packagebasename}-{packageversion}"
+
+def srcdir_name( **kwargs ):
+    homedir = create_homedir( **kwargs )
+    downloaddir = kwargs.get( "downloadpath",homedir )
+    srcdir_local = srcdir_local_name( **kwargs )
+    return f"{downloaddir}/{srcdir_local}"
+
 def builddir_name( **kwargs ):
     package,packageversion = packagenames( **kwargs )
     installext = install_extension( **kwargs )
