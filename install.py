@@ -99,6 +99,8 @@ def cmake_configure( **kwargs ):
     #
     # execute cmake
     #
+    echo_string( f"Cmake configuring in {builddir}" )
+    os.chdir( builddir )
     shell = process_initiate( **kwargs )
     compilers_export = export_compilers( **kwargs )
     process_execute( compilers_export,**kwargs,process=shell )
@@ -111,7 +113,6 @@ def cmake_configure( **kwargs ):
 {cmakeflags} {cmakeflagsplatform} \
 {cmakesourcedir} \
 "
-    os.chdir( builddir )
     process_execute( cmdline,**kwargs,process=shell )
     process_terminate( shell,**kwargs )
 

@@ -150,7 +150,6 @@ def prefixdir_name( **kwargs ):
         # install extension
         installext = install_extension( **kwargs )
         prefixdir = f"{prefixdir}-{installext}"
-        echo_string( f"with install extension {installext}: {prefixdir}",**kwargs )
     if not nonnull( prefixdir ):
         raise Exception( "failed to set prefixdir" )
     if nonnull( var := kwargs.get("installvariant","") ):
