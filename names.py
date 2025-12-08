@@ -118,11 +118,12 @@ def srcdir_name( **kwargs ):
 def builddir_name( **kwargs ):
     package,packageversion = package_names( **kwargs )
     installext = install_extension( **kwargs )
-    if nonnull( bdir := kwargs.get("root","") ):
-        builddir = f"{bdir}/build-{installext}"
+    if bdir := nonzero_keyword( "root",**kwargs ):
+        builddir = bdir
     else:
         homedir = create_homedir( **kwargs )
-        builddir = f"{homedir}/build-{installext}"
+        builddir = homedir
+    builddir += f"/{package}/build-{installext}"
     return builddir
 
 def prefixdir_name( **kwargs ):
@@ -157,7 +158,7 @@ def prefixdir_name( **kwargs ):
         prefixdir = f"{prefixdir}/{var}"
     return prefixdir
 
-def module_file_full_name( **kwargs ):
+def modulefile_path_and_name( **kwargs ):
     abort_on_nonzero_env( "MODULEDIRSET" )
     #
     # construct module path
@@ -185,8 +186,7 @@ def module_file_full_name( **kwargs ):
     #
     package,packageversion = package_names( **kwargs )
     modulename,moduleversion = module_names( **kwargs )
-    moduledir = f"{modulepath}/{modulename}"
-    return f"{moduledir}/{moduleversion}.lua"
+    return f"{modulepath}/{modulename}",f"{moduleversion}.lua"
 
 def module_names( **kwargs):
     package,packageversion = package_names( **kwargs )

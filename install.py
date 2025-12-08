@@ -13,10 +13,11 @@ import shutil
 import modules
 import names
 import process
-from process import process_execute, echo_string, error_abort
+from process import process_execute, process_initiate, process_terminate
+from process import echo_string, error_abort, abort_on_zero_env
 from process import nonnull, nonzero_keyword, zero_keyword, abort_on_zero_keyword
 
-def cmake_configure( **kwargs ):
+def configure_prep( **kwargs ):
     modules.test_modules( **kwargs )
     #
     # setup directories
@@ -29,6 +30,53 @@ def cmake_configure( **kwargs ):
         shutil.rmtree(builddir)
     except FileNotFoundError: pass
     os.mkdir(builddir)
+    return srcdir,builddir,prefixdir
+
+def compilers_names( **kwargs ):
+    compilers = { 'CC':"unknown_cc", 'CXX':"unknown_cxx", 'FC':"unknown_fc", }
+    if ( mode := kwargs.get("mode","mode_not_found") ) in [ "mpi","hybrid", ]:
+        compilers["CC"] = "mpicc"; compilers["CXX"] = "mpicxx"; compilers["FC"] = "mpif90"
+    elif mode in [ "seq", "omp", ]:
+        compilers["CC"]  = abort_on_zero_env( "TACC_CC",**kwargs )
+        compilers["CXX"] = abort_on_zero_env( "TACC_CXX",**kwargs )
+        compilers["FC"]  = abort_on_zero_env( "TACC_FC",**kwargs )
+    elif mode == "core":
+        compilers["CC"] = "gcc"; compilers["CXX"] = "g++"; compilers["FC"] = "gfortran"
+    else: raise Exception( "Unknown mode: {mode}" )
+    return compilers
+
+def export_compilers( **kwargs ):
+    compilers = compilers_names( **kwargs )
+    cmdline = ""; cont = ""
+    for key,val in compilers.items():
+        echo_string( f"Setting compiler: {key}={val}",**kwargs )
+        which = process_execute( f"which {val}",**kwargs,terminal=None )
+        echo_string( f" .. where {val}={which}",**kwargs )
+        cmdline += f"{cont}export {key}={val}"
+        cont = " && "
+    return cmdline
+
+def compilers_flags( **kwargs ):
+    flags = { 'CFLAGS':"", 'CXXFLAGS':"", 'FFLAGS':"", }
+    if cflags := nonzero_keyword( "cflags",**kwargs ):
+        flags["CFLAGS"] = cflags
+    if cxxflags := nonzero_keyword( "cxxflags",**kwargs ):
+        flags["CCXXFLAGS"] = cxxflags
+    if fflags := nonzero_keyword( "fflags",**kwargs ):
+        flags["FFLAGS"] = fflags
+    return flags
+
+def export_flags( **kwargs ):
+    flags = compilers_flags( **kwargs )
+    cmdline = ""; cont = ""
+    for lang in [ "CFLAGS", "CXXFLAGS", "FFLAGS", ]:
+        if nonnull( flag := flags[lang] ):
+            cmdline += f"{cont}export {lang}=\"{flag}\""
+            cont = " && "
+    return cmdline
+
+def cmake_configure( **kwargs ):
+    srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #
     # flags
     #
@@ -51,6 +99,9 @@ def cmake_configure( **kwargs ):
     #
     # execute cmake
     #
+    shell = process_initiate( **kwargs )
+    compilers_export = export_compilers( **kwargs )
+    process_execute( compilers_export,**kwargs,process=shell )
     cmdline = f"{cmake} -D CMAKE_INSTALL_PREFIX={prefixdir} \
 -D CMAKE_COMPILE_WARNING_AS_ERROR=OFF \
 -D CMAKE_POLICY_VERSION_MINIMUM=3.13 \
@@ -61,7 +112,8 @@ def cmake_configure( **kwargs ):
 {cmakesourcedir} \
 "
     os.chdir( builddir )
-    process_execute( cmdline )
+    process_execute( cmdline,**kwargs,process=shell )
+    process_terminate( shell,**kwargs )
 
 def cmake_build( **kwargs ):
     #
@@ -78,29 +130,103 @@ def cmake_build( **kwargs ):
     #
     # execute make & make install
     make = f"make --no-print-directory V=1 VERBOSE=1 -j {jcount}"
+    if nonzero_keyword("noinstall"):
+        return
+    echo_string( f"Making in builddir: {builddir}",**kwargs )
+    if not os.path.isdir(builddir):
+        raise Exception( f"Invalid builddir: {builddir}",**kwargs )
     os.chdir( builddir )
-    if zero_keyword("noinstall"):
-        cmdline = f"{make} {makebuildtarget}"
+    cmdline = f"{make} {makebuildtarget}"
+    process_execute( cmdline )
+    if extra_targets := nonzero_keyword( "extrabuildtargets" ):
+        cmdline = f"{make} {extra_targets}"
         process_execute( cmdline )
-        if extra_targets := nonzero_keyword( "extrabuildtargets" ):
-            cmdline = f"{make} {extra_targets}"
-            process_execute( cmdline )
-        cmdline = f"{make} install"
+    cmdline = f"{make} install"
+    process_execute( cmdline )
+    if extra_targets := nonzero_keyword( "extrainstalltargets" ):
+        cmdline = f"{make} {extra_targets}"
         process_execute( cmdline )
-        if extra_targets := nonzero_keyword( "extrainstalltargets" ):
-            cmdline = f"{make} {extra_targets}"
-            process_execute( cmdline )
 
 def autotools_configure( **kwargs ):
-    pass
+    srcdir,builddir,prefixdir = configure_prep( **kwargs )
+    #installext
+    #
+    # execute configure
+    #
+    os.chdir(srcdir)
+    shell = process_initiate( **kwargs )
+    compilers_export = export_compilers( **kwargs )
+    process_execute( compilers_export,**kwargs,process=shell )
+    flags_export = export_flags( **kwargs )
+    process_execute( flags_export,**kwargs,process=shell )
+    if before := nonzero_keyword( "beforeconfigurecmds",**kwargs ):
+        process_execute( before,**kwargs,process=shell )
+    if nonzero_keyword( "defunprogfc",**kwargs ):
+        process_execute( "sed -i configure.ac -e \'/AC_INIT/aAC_DEFUN([_AC_PROG_FC_V],[])\'",
+                         **kwargs,process=shell )
+    if not os.path.exists("configure") and os.path.exists("autogen.sh"):
+        process_execute( "./autogen.sh",**kwargs,process=shell )
+    if not os.path.exists("configure") or nonzero_keyword( "forcereconf",**kwargs ):
+        if not os.path.exists( "configure.ac" ):
+            raise Exception( "Need configure.ac to generate configure script" )
+        if reconf := nonzero_keyword( "autoreconf",**kwargs ):
+            cmdline = f"{reconf} -i"
+        else:
+            cmdline = f"aclocal && autoconf"
+        process_execute( cmdline,**kwargs,process=shell )
+    if nonzero_keyword( "configinbuilddir",**kwargs ):
+        os.chdir(builddir) # only gcc
+        cmdline = f"{srcdir}/configure"
+    elif subdir := nonzero_keyword( "configuresubdir",**kwargs ):
+        os.chdir(subdir)
+        cmdline = f"./configure"
+    else:
+        cmdline = f"./configure"
+    if option := nonzero_keyword( "prefixoption",**kwargs ):
+        prefixoption = option # pdtoolkit
+    else: prefixoption = "--prefix"
+    cmdline += f" {prefixoption}={prefixdir} --libdir={prefixdir}/lib"
+    if flags := nonzero_keyword( "configureflags",**kwargs ):
+        cmdline += f" {flags}"
+    process_execute( cmdline,**kwargs,process=shell )
+    process_terminate( shell,**kwargs )
+    
 def autotools_build( **kwargs ):
-    pass
+    #
+    # setup directories
+    #
+    srcdir    = names.srcdir_name( **kwargs )
+    builddir  = names.builddir_name( **kwargs )
+    prefixdir = names.prefixdir_name( **kwargs )
+    if nonzero_keyword("noinstall"):
+        return
+    if subdir := nonzero_keyword("makesubdir",**kwargs):
+        os.chdir(subdir)
+    else:
+        os.chdir(srcdir)
+    echo_string( f"Building and installing in {os.getcwd()}" )
+    #
+    # Make
+    #
+    jval = kwargs.get("jcount",6)
+    makecommand = f"make --no-print-directory -j {jval}"
+    process_execute( makecommand,**kwargs )
+    if extra := nonzero_keyword( "extrabuildtargets",**kwargs ):
+        process_execute( f"{makecommand} {extra}",**kwargs )
+    #
+    # install
+    #
+    extra = kwargs.get( "extrainstalltarget","" )
+    cmdline = f"make --no-print-directory install {extra}"
+    process_execute( cmdline,**kwargs )
+    if cptoinstall := nonzero_keyword( "cptoinstalldir",**kwargs ):
+        echo_string( f"Extra installs: {cptoinstall}",**kwargs )
+        process_execute( f"cp -r {cptoinstall} {prefixdir}",**kwargs )
 
 def write_module_file( **kwargs ):
     #
     # paths
     #
-    modulefile_fullname = names.module_file_full_name( **kwargs )
     #
     # module contents
     #
@@ -111,8 +237,12 @@ def write_module_file( **kwargs ):
     #
     # write
     #
-    echo_string( f"Writing modulefule: {modulefile_fullname}" )
-    with open( f"{modulefile_fullname}","w" ) as modulefile:
+    modulefilepath,luaversion = names.modulefile_path_and_name( **kwargs )
+    if not os.path.isdir(modulefilepath):
+        echo_string( f"First create module dir: {modulefilepath}",**kwargs )
+        os.mkdir( modulefilepath )
+    echo_string( f"Writing modulefile: {luaversion}" )
+    with open( f"{modulefilepath}/{luaversion}","w" ) as modulefile:
         modulefile.write( f"""\
 {help_string}
 

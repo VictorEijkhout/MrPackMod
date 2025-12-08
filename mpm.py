@@ -25,7 +25,7 @@ from MrPackMod import process as process
 
 def mpm(args):
     configuration = config.read_config()
-    print(configuration)
+    #print(configuration)
     for action in args:
         print( f"Action: {action}" )
         if action=="help":
@@ -42,11 +42,15 @@ def mpm(args):
         elif action=="configure":
             if ( system := configuration["buildsystem"].lower() ) == "cmake":
                 install.cmake_configure( **configuration )
-            else: raise Exception( f"Can only configure for cmake, not: {system}" )
+            elif system == "autotools":
+                install.autotools_configure( **configuration )
+            else: raise Exception( f"Can only configure for cmake and autotools, not: {system}" )
         elif action=="build":
             if ( system := configuration["buildsystem"].lower() ) == "cmake":
                 install.cmake_build( **configuration )
-            else: raise Exception( f"Can only build for cmake, not: {system}" )
+            elif system == "autotools":
+                install.autotools_build( **configuration )
+            else: raise Exception( f"Can only build for cmake and autotools, not: {system}" )
         elif action=="module":
             install.write_module_file( **configuration )
         else: process.error_abort( f"Unknown action: {action}" )

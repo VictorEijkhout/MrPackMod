@@ -3,6 +3,7 @@
 ##
 ## python modules
 ##
+import os
 import re
 import subprocess
 import sys
@@ -72,26 +73,20 @@ def unimplemented( var ):
     except:
         pass
 
-def process_execute( cmdline,**kwargs ):
-    process = kwargs.get("process",None)
-    logfile = kwargs.get("logfile",None)
-    terminal = kwargs.get( "terminal",sys.stdout )
-    if logfile is None:
-        logfile = sys.stdout
-    if process is None:
-        process = subprocess.Popen\
-            (['/bin/bash', '-l'], 
-             stdin=subprocess.PIPE, 
-             stdout=subprocess.PIPE, 
-             stderr=subprocess.STDOUT,
-             text=True,
-             bufsize=1)
-    echo_string( f"Command line={cmdline}" )
+def process_initiate( **kwargs ):
+    return subprocess.Popen\
+        (['/bin/bash', '-l'], 
+         stdin=subprocess.PIPE, 
+         stdout=subprocess.PIPE, 
+         stderr=subprocess.STDOUT,
+         text=True,
+         bufsize=1)
+
+def process_terminate( process,**kwargs ):
     process_input = process.stdin
-    process_input.write( cmdline+"\n" )
     process_input.flush()
     process_input.close()
-    echo_string( "Output:" )
+    echo_string( "Output:",**kwargs )
     lastline = ""
     while True:
         line = process.stdout.readline()
@@ -99,11 +94,27 @@ def process_execute( cmdline,**kwargs ):
             break
         line = re.sub( r'^[ \t]*','', re.sub( r'[ \t\n]*$','', line ) )
         if line != "":
-            echo_string( line,terminal=terminal )
+            echo_string( line,**kwargs )
             lastline = line
-    echo_string( " .. end of output" )
+    echo_string( " .. end of output",**kwargs )
     process.wait()
     return lastline
+
+def process_execute( cmdline,**kwargs ):
+    outside_process = kwargs.get("process",None)
+    logfile = kwargs.get("logfile",None)
+    if logfile is None:
+        logfile = sys.stdout
+    if outside_process is None:
+        process = process_initiate()
+    else: process = outside_process
+    echo_string( f"Command line={cmdline}",**kwargs )
+    process_input = process.stdin
+    process_input.write( cmdline+"\n" )
+    if outside_process:
+        return ""
+    else:
+        return process_terminate( process,**kwargs )
 
 def number_satisfies( l,w,**kwargs ):
     if False:

@@ -15,28 +15,34 @@ import names
 import process
 from process import echo_string,error_abort,abort_on_zero_keyword
 from process import nonnull,zero_keyword,nonzero_keyword,nonzero_keyword_or_default
+from process import process_execute
 
 def test_modules( **kwargs ):
-    modules = kwargs.get( "modules","" )
     error = False
+    if not (modules := nonzero_keyword( "modules",**kwargs ) ):
+        echo_string( "No prerequisite modules",**kwargs )
+        return
     for m in modules.split(" "):
         if not nonnull(m):continue
-        mod,ver = f"{m}/".split('/',maxsplit=1); ver=ver.strip("/")
-        echo_string( f"test presence of module={mod} version={ver}" )
+        mod,ver = f"{m}/".split('/',maxsplit=1); mod = mod.lower(); ver=ver.strip("/")
+        echo_string( f"Test presence of module={mod} version={ver}" )
         try:
-            dir = os.environ[ "TACC_"+mod.upper()+"_DIR" ]
+            dir = os.getenv( f"TACC_{mod.upper()}_DIR" )
         except:
             error = True
-            echo_string( f"Please load module: {mod}" )
+            echo_string( f"Please load module: {mod}",**kwargs )
             continue
+        loc = process_execute( f"module -t show {mod}",**kwargs,terminal=None )
+        echo_string( f" .. module {mod} loaded from: {loc}",**kwargs )
         if not os.path.isdir(dir):
             error = True
-            echo_string( f"Module {mod} loaded but directory not found: {dir}" )
+            echo_string( f"Module {mod} loaded but directory not found: {dir}",**kwargs )
         try:
             loadedversion = os.environ[ "TACC_"+mod.upper()+"_VERSION" ]
             if nonnull(ver):
                 if not process.version_satisfies(loadedversion,ver,terminal=None):
-                    echo_string( f"loaded version: {loadedversion} does not match version {ver}" )
+                    echo_string( f"loaded version: {loadedversion} does not match version {ver}",
+                                 **kwargs )
                     error = True
         except: continue
     if error: sys.exit(1)

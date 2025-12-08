@@ -4,6 +4,11 @@
 import re
 import os
 
+#
+# my modules
+#
+from process import echo_string
+
 def read_config():
     configuration_dict = {
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
@@ -21,26 +26,34 @@ def read_config():
     }
     macros = {}
     with open("Configuration","r") as configuration_file:
+        saving = False
         for line in configuration_file.readlines():
             line = line.strip()
             if re.match( r'^#',     line ): continue
             if re.match( r'^[ \t]*$',line ): continue
             if letdef := re.search( r'^let\s*([A-Z]*)\s*=\s*(.*)$',line ):
                 key,val = letdef.groups()
-                val = val.strip('\n').strip(' ')
                 # macro with literal key
                 macros[key] = val
-                # everywhere else keys are lowercase
-                key = key.lower()
-                configuration_dict[key] = val
             elif keyval := re.search( r'^\s*([A-Z]*)\s*=\s*(.*)$',line ):
                 key,val = keyval.groups()
-                key = key.lower(); val = val.strip('\n').strip(' ')
-                for m in macros:
-                    searchstring = '${'+m+'}'
-                    val = val.replace( searchstring,macros[m] )
-                configuration_dict[key] = val
+            elif saving:
+                # we inherit key from the previous iteration
+                # we also inherit val & extend it with the current line
+                val += line
             else:
                 raise Exception( f"Can not parse: <<{line}>>")
+            key = key.lower(); val = val.strip('\n').strip(' ')
+            if re.search( r'\\$',val ):
+                # if the, possibly compounded, line is still to be continued:
+                val = val.strip( r'\\' )
+                saving = True
+                continue
+            else: saving = False # time to ship out
+            for m in macros:
+                searchstring = '${'+m+'}'
+                val = val.replace( searchstring,macros[m] )
+            configuration_dict[key] = val
+            # echo_string( f"Setting: {key} = {val}" )
     #print(configuration_dict)
     return configuration_dict
