@@ -4,10 +4,10 @@ import sys
 args = sys.argv
 actions = [ "help",
             "list", "test",
-            "download", "unpack", "configure", "build",
+            "download", "unpack", "configure", "build", "module",
             ]
 def usage(program):
-    print( f"Usage: {program} action (from download, unpack, configure build)" )
+    print( f"Usage: {program} action (from download, unpack, configure, build, module)" )
 
 if len(args)==1:
     usage; sys.exit(0)
@@ -21,6 +21,7 @@ from MrPackMod import info as info
 from MrPackMod import install as install
 from MrPackMod import modules as modules
 from MrPackMod import names as names
+from MrPackMod import process as process
 
 def mpm(args):
     configuration = config.read_config()
@@ -46,5 +47,8 @@ def mpm(args):
             if ( system := configuration["buildsystem"].lower() ) == "cmake":
                 install.cmake_build( **configuration )
             else: raise Exception( f"Can only build for cmake, not: {system}" )
+        elif action=="module":
+            install.write_module_file( **configuration )
+        else: process.error_abort( f"Unknown action: {action}" )
                 
 mpm( args )

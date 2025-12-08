@@ -7,9 +7,15 @@ import os
 def read_config():
     configuration_dict = {
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
-        'compiler':os.getenv("TACC_FAMILY_COMPILER","UNKNOWN_COMPILER"),
+        # paths
         'root':os.getenv("PACKAGEROOT",os.getenv("HOME")),
         'installroot':os.getenv("INSTALLROOT","NO_INSTALLROOT_GIVEN"),
+        'moduleroot':os.getenv("MODULEROOT","NO_MODULEROOT_GIVEN"),
+        # compiler
+        'compiler':os.getenv("TACC_FAMILY_COMPILER","UNKNOWN_COMPILER"),
+        'compilerversion':os.getenv("TACC_FAMILY_COMPILER_VERSION","UNKNOWN_COMPILER_VERSION"),
+        'mpi':os.getenv("TACC_FAMILY_MPI","UNKNOWN_MPI"),
+        'mpiversion':os.getenv("TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION"),
         # default value:
         'buildsystem':"cmake", 
     }

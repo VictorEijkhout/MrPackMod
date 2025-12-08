@@ -13,7 +13,7 @@ import sys
 #
 import process
 from process import echo_string,error_abort,abort_on_nonzero_env,abort_on_zero_env,abort_on_zero_keyword
-from process import requirenonzero,nonnull
+from process import requirenonzero,nonnull,nonzero_keyword
 
 ##
 ## Deescription: compute package name and version,
@@ -21,7 +21,7 @@ from process import requirenonzero,nonnull
 ## in the future we will handle the case of git pulls
 ## Result: pair package,version
 ##
-def packagenames( **kwargs ):
+def package_names( **kwargs ):
     package = kwargs.get("package").lower()
     version = kwargs.get("packageversion").lower()
     terminal = kwargs.get("terminal")
@@ -41,7 +41,7 @@ def create_homedir( **kwargs ):
     package  = kwargs.get( "package","nullpackage" )
     homedir  = kwargs.get( "homedir",None )
     terminal = kwargs.get( "terminal",None )
-    package,_ = packagenames(package=package,packageversion="0.0",termminal=terminal)
+    package,_ = package_names(package=package,packageversion="0.0",termminal=terminal)
     if root:
         echo_string( f"creating homedir value based on root: {root}",terminal=terminal )
         homedir = f"{root}/{package}"
@@ -96,7 +96,7 @@ def systemnames():
     return mpicode,mpiversion
 
 def install_extension( **kwargs ):
-    package,packageversion = packagenames( **kwargs )
+    package,packageversion = package_names( **kwargs )
     envcode = environment_code( kwargs.get("mode") )
     installext = f"{packageversion}-{envcode}"
     if nonnull( iext := kwargs.get( "installext","" ) ):
@@ -106,7 +106,7 @@ def install_extension( **kwargs ):
     return installext
 
 def srcdir_local_name( **kwargs ):
-    packagebasename,packageversion = packagenames( **kwargs )
+    packagebasename,packageversion = package_names( **kwargs )
     return f"{packagebasename}-{packageversion}"
 
 def srcdir_name( **kwargs ):
@@ -116,7 +116,7 @@ def srcdir_name( **kwargs ):
     return f"{downloaddir}/{srcdir_local}"
 
 def builddir_name( **kwargs ):
-    package,packageversion = packagenames( **kwargs )
+    package,packageversion = package_names( **kwargs )
     installext = install_extension( **kwargs )
     if nonnull( bdir := kwargs.get("root","") ):
         builddir = f"{bdir}/build-{installext}"
@@ -126,18 +126,20 @@ def builddir_name( **kwargs ):
     return builddir
 
 def prefixdir_name( **kwargs ):
-    package,packageversion = packagenames( **kwargs )
+    package,packageversion = package_names( **kwargs )
     if nonnull( pdir:=kwargs.get("installpath","") ):
-        echo_string( f"Using external prefixdir: {pdir}",terminal=None )
+        echo_string( f"Using external prefixdir: {pdir}" )
         prefixdir = pdir
     elif nonnull( kwargs.get("noinstall","") ):
         raise Exception( f"use of NOINSTALL not implemented" )
     else:
         # path & "installation"
         if nonnull( idir:=kwargs.get("installroot","") ):
+            echo_string( f"prefixdir from installroot: {idir}",**kwargs )
             prefixdir = f"{idir}/installation"
         else: 
             hdir = create_homedir( **kwargs )
+            echo_string( f"prefixdir from homedir: {hdir}",**kwargs )
             prefixdir = f"{hdir}/installation"
         # attach package name
         if nonnull( mname:=kwargs.get("modulename","") ):
@@ -147,9 +149,11 @@ def prefixdir_name( **kwargs ):
         # install extension
         installext = install_extension( **kwargs )
         prefixdir = f"{prefixdir}-{installext}"
+        echo_string( f"with install extension {installext}: {prefixdir}",**kwargs )
     if not nonnull( prefixdir ):
         raise Exception( "failed to set prefixdir" )
     if nonnull( var := kwargs.get("installvariant","") ):
+        echo_string( f"using subdir for installvariant: {var}" )
         prefixdir = f"{prefixdir}/{var}"
     return prefixdir
 
@@ -179,16 +183,19 @@ def module_file_full_name( **kwargs ):
     #
     # attach package name
     #
-    package,packageversion = packagenames( **kwargs )
-    modulename = kwargs.get( "MODULENAME",package )
+    package,packageversion = package_names( **kwargs )
+    modulename,moduleversion = module_names( **kwargs )
     moduledir = f"{modulepath}/{modulename}"
-    #
-    # attach module version
-    #
+    return f"{moduledir}/{moduleversion}.lua"
+
+def module_names( **kwargs):
+    package,packageversion = package_names( **kwargs )
+    modulename = kwargs.get( "modulename",package )
+    if alt := nonzero_keyword( "modulenamealt" ):
+        modulename = alt
     moduleversion = packageversion
     if nonnull( vt := kwargs.get("installvariant") ):
         moduleversion += f"-{vt}"
     if nonnull( mx := kwargs.get("moduleversionextra") ):
         moduleversion += f"-{mx}"
-
-    return f"{moduledir}/{moduleversion}.lua"
+    return modulename,moduleversion

@@ -10,12 +10,14 @@ import shutil
 #
 # my own modules
 #
+import modules
 import names
 import process
 from process import process_execute, echo_string, error_abort
 from process import nonnull, nonzero_keyword, zero_keyword, abort_on_zero_keyword
 
 def cmake_configure( **kwargs ):
+    modules.test_modules( **kwargs )
     #
     # setup directories
     #
@@ -93,3 +95,31 @@ def autotools_configure( **kwargs ):
     pass
 def autotools_build( **kwargs ):
     pass
+
+def write_module_file( **kwargs ):
+    #
+    # paths
+    #
+    modulefile_fullname = names.module_file_full_name( **kwargs )
+    #
+    # module contents
+    #
+    help_string   = modules.module_help_string( **kwargs )
+    pkg_info      = modules.package_info( **kwargs )
+    path_settings = modules.path_settings( **kwargs )
+    system_paths  = modules.system_paths( ** kwargs )
+    #
+    # write
+    #
+    echo_string( f"Writing modulefule: {modulefile_fullname}" )
+    with open( f"{modulefile_fullname}","w" ) as modulefile:
+        modulefile.write( f"""\
+{help_string}
+
+{pkg_info}
+
+{path_settings}
+
+{system_paths}
+"""
+                          )

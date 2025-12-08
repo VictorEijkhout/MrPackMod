@@ -42,7 +42,7 @@ def test_modules( **kwargs ):
     if error: sys.exit(1)
 
 def package_dir_names( **kwargs ):
-    prefixdir = kwargs.get("prefixdir")
+    prefixdir = names.prefixdir_name( **kwargs )
     # lib
     if zero_keyword( "nolib",**kwargs ):
         libdir = f"{prefixdir}/lib64"
@@ -66,8 +66,8 @@ def package_dir_names( **kwargs ):
     return prefixdir,libdir,incdir,bindir
 
 def module_help_string( **kwargs ):
-    package       = abort_on_zero_keyword( "package",**kwargs ).lower()
-    moduleversion = abort_on_zero_keyword( "moduleversion",**kwargs )
+    package,packageversion   = names.package_names( **kwargs )
+    modulename,moduleversion = names.module_names( **kwargs )
     about         = abort_on_zero_keyword( "about",**kwargs )
     software      = kwargs.get( "softwareurl"," " )
     cmake         = kwargs.get( "prefixpathset" )
@@ -98,8 +98,8 @@ The {package} modulefile defines the following variables:
 """.strip()
 
 def package_info( **kwargs ):
-    package       = abort_on_zero_keyword( "package",**kwargs ).lower()
-    moduleversion = abort_on_zero_keyword( "moduleversion",**kwargs )
+    package,packageversion   = names.package_names( **kwargs )
+    modulename,moduleversion = names.module_names( **kwargs )
     return \
 f"""\
 whatis( "Name:",   \"{package}\" )
@@ -107,11 +107,10 @@ whatis( "Version", \"{moduleversion}\" )
 """.strip()
 
 def path_settings( **kwargs ):
-    packagename   = abort_on_zero_keyword( "package",**kwargs ).lower()
-    modulename    = nonzero_keyword_or_default( "modulename",default=packagename ).lower()
+    package,packageversion   = names.package_names( **kwargs )
+    modulename,moduleversion = names.module_names( **kwargs )
     modulenamealt = kwargs.get("modulenamealt","").lower()
-    moduleversion = abort_on_zero_keyword( "moduleversion",**kwargs )
-    prefixdir     = abort_on_zero_keyword( "prefixdir",**kwargs ).strip("/")
+    prefixdir                = names.prefixdir_name( **kwargs )
 
     paths = ""
     info  = ""
@@ -134,11 +133,7 @@ local prefixdir = \"{prefixdir}\"
 """.strip()
 
 def system_paths( **kwargs ):
-    packagename   = abort_on_zero_keyword( "package",**kwargs ).lower()
-    modulename    = nonzero_keyword_or_default( "modulename",default=packagename ).lower()
-    modulenamealt = kwargs.get("modulenamealt","").lower()
-    moduleversion = abort_on_zero_keyword( "moduleversion",**kwargs )
-    prefixdir     = abort_on_zero_keyword( "prefixdir",**kwargs ).strip("/")
+    prefixdir     = names.prefixdir_name( **kwargs )
 
     envs = ""
     for sub in [ "inc", "lib", "bin", ]:
