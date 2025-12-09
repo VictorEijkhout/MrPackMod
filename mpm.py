@@ -9,22 +9,24 @@ parser = argparse.ArgumentParser\
       add_help=True )
 parser.add_argument( '-t','--trace',action='store_true' )
 parser.add_argument(  '-c','--configuration',default="Configuration")
-parser.add_argument( 'actions', nargs='*', help="actions" )
+parser.add_argument( 'actions', nargs='*', help="test configure build module, install=configure+build, module" )
 
 arguments  = parser.parse_args()
 configfile = arguments.configuration
 tracing    = arguments.trace
 
 actions = arguments.actions
+if "install" in actions:
+    index = actions.index("install")
+    actions = actions[:index] + ["configure", "build", "module" ] + actions[index+1:]
 
-import MrPackMod.config
-from MrPackMod import config as config
-from MrPackMod import download as download
-from MrPackMod import info as info
-from MrPackMod import install as install
-from MrPackMod import modules as modules
-from MrPackMod import names as names
-from MrPackMod import process as process
+from MrPackMod import config 
+from MrPackMod import download
+from MrPackMod import info 
+from MrPackMod import install
+from MrPackMod import modules
+from MrPackMod import names 
+from MrPackMod import process
 
 def mpm(args,tracing=tracing):
     configuration = config.read_config(configfile,tracing)

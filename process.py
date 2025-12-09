@@ -18,6 +18,9 @@ def error_abort( string,**kwargs ):
     echo_string( f"ERROR {string}" )
     sys.exit(1)
 
+def nonzero_env( envvar,**kwargs ):
+    val = os.getenv( envvar,"" )
+
 def abort_on_zero_env( envvar,**kwargs ):
     try:
         val = os.environ[envvar]
@@ -40,6 +43,9 @@ def abort_on_zero_keyword( keyword,**kwargs ):
 
 def nonnull( val ):
     return ( val is not None ) and ( val is not False ) and ( not re.match( r'^[ \t\n]*$',val ) )
+
+def isnull( val ):
+    return not nonnull( val )
 
 def zero_keyword( var,**kwargs ):
     return not nonzero_keyword( var,**kwargs )

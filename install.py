@@ -236,7 +236,9 @@ def write_module_file( **kwargs ):
     pkg_info      = modules.package_info       ( **kwargs )
     path_settings = modules.path_settings      ( **kwargs )
     system_paths  = modules.system_paths       ( **kwargs )
-    depends       = modules.dependencies       ( **kwargs )
+    if nonnull( depends := modules.dependencies       ( **kwargs ) ):
+        depends = f"\n{depends}"
+
     #
     # write
     #
@@ -253,9 +255,7 @@ def write_module_file( **kwargs ):
 
 {path_settings}
 
-{system_paths}
-
-{depends}
+{system_paths}{depends}
 """
         if tracing:
             echo_string( f"Module contents:\n{modulecontents}",**kwargs )
