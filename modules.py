@@ -74,16 +74,22 @@ def package_dir_names( **kwargs ):
 def module_help_string( **kwargs ):
     package,packageversion   = names.package_names( **kwargs )
     modulename,moduleversion = names.module_names( **kwargs )
-    about         = abort_on_zero_keyword( "about",**kwargs )
-    software      = kwargs.get( "softwareurl"," " )
-    cmake         = kwargs.get( "prefixpathset" )
-    pkgconfig     = kwargs.get( "pkgconfig" )
+
+    about = abort_on_zero_keyword( "about",**kwargs )
+    about += "\n"
+    url      = kwargs.get( "url" )
+    software = kwargs.get( "softwareurl" )
+    if url      : about += f"Homepage: {url}\n"
+    if software : about += f"Software: {software}\n"
 
     vars = f"TACC_{package.upper()}_DIR"
     for sub in [ "inc", "lib", "bin", ]:
         if dir := kwargs.get( f"{sub}dir" ):
             vars += f", TACC_{package.upper()}_{sub.upper()}"
+
     notes = ""
+    cmake     = kwargs.get( "prefixpathset" )
+    pkgconfig = kwargs.get( "pkgconfig" )
     if cmake    : notes += "Discoverable by CMake through find_package.\n"
     if pkgconfig: notes += "Discoverable by CMake through pkg-config.\n"
     notes += f"\n(modulefile generated {datetime.date.today()})"
@@ -94,11 +100,8 @@ local helpMsg = [[
 Package: {package}/{moduleversion}
 
 {about}
-{software}
-
 The {package} modulefile defines the following variables:
     {vars}.
-
 {notes}
 ]]
 """.strip()
@@ -185,3 +188,20 @@ def system_paths( **kwargs ):
 f"""\
 {envs}
 """.strip()
+
+def dependencies( **kwargs ):
+    tracing = kwargs.get( "tracing" )
+    depends = ""
+    if noversion := nonzero_keyword( "dependson",**kwargs ):
+        if tracing:
+            echo_string( f"depends on: {noversion}" )
+        depends += f"{noversion}\n"
+    if versions  := nonzero_keyword( "dependsoncurrrent",**kwargs ):
+        if tracing:
+            echo_string( f"depends on current version of: {versions}" )
+        depends += f"{versions}/0.0\n"
+    if family    := nonzero_keyword( "family",**kwargs ):
+        if tracing:
+            echo_string( f"belongs to family: {family}" )
+        depends += f"family( {family} )\n"
+    return depends

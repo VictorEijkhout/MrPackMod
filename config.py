@@ -9,7 +9,7 @@ import os
 #
 from process import echo_string
 
-def read_config(configfile):
+def read_config(configfile,tracing=False):
     configuration_dict = {
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
         # paths
@@ -26,20 +26,24 @@ def read_config(configfile):
     }
     macros = {}
     with open(configfile,"r") as configuration_file:
+        if tracing:
+            echo_string( "Read configuration: {configfile}" )
         saving = False
         for line in configuration_file.readlines():
             line = line.strip()
             if re.match( r'^#',     line ): continue
             if re.match( r'^[ \t]*$',line ): continue
-            if letdef := re.search( r'^let\s*([A-Z]*)\s*=\s*(.*)$',line ):
+            if letdef := re.search( r'^let\s*([A-Z0-9]*)\s*=\s*(.*)$',line ):
                 key,val = letdef.groups()
                 # macro with literal key
                 macros[key] = val
-            elif keyval := re.search( r'^\s*([A-Z]*)\s*=\s*(.*)$',line ):
+            elif keyval := re.search( r'^\s*([A-Z0-9]*)\s*=\s*(.*)$',line ):
                 key,val = keyval.groups()
             elif saving:
                 # we inherit key from the previous iteration
                 # we also inherit val & extend it with the current line
+                if tracing:
+                    echo_string( f" .. building up key={key} with: {line}" )
                 val += line
             else:
                 raise Exception( f"Can not parse: <<{line}>>")
@@ -54,6 +58,8 @@ def read_config(configfile):
                 searchstring = '${'+m+'}'
                 val = val.replace( searchstring,macros[m] )
             configuration_dict[key] = val
-            # echo_string( f"Setting: {key} = {val}" )
-    #print(configuration_dict)
+            if tracing:
+                echo_string( f"Setting: {key} = {val}" )
+    if tracing:
+        print(configuration_dict)
     return configuration_dict

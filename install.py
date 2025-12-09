@@ -225,16 +225,18 @@ def autotools_build( **kwargs ):
         process_execute( f"cp -r {cptoinstall} {prefixdir}",**kwargs )
 
 def write_module_file( **kwargs ):
+    tracing = kwargs.get("tracing")
     #
     # paths
     #
     #
     # module contents
     #
-    help_string   = modules.module_help_string( **kwargs )
-    pkg_info      = modules.package_info( **kwargs )
-    path_settings = modules.path_settings( **kwargs )
-    system_paths  = modules.system_paths( ** kwargs )
+    help_string   = modules.module_help_string ( **kwargs )
+    pkg_info      = modules.package_info       ( **kwargs )
+    path_settings = modules.path_settings      ( **kwargs )
+    system_paths  = modules.system_paths       ( **kwargs )
+    depends       = modules.dependencies       ( **kwargs )
     #
     # write
     #
@@ -242,9 +244,9 @@ def write_module_file( **kwargs ):
     if not os.path.isdir(modulefilepath):
         echo_string( f"First create module dir: {modulefilepath}",**kwargs )
         os.mkdir( modulefilepath )
-    echo_string( f"Writing modulefile: {luaversion}" )
+    echo_string( f"Writing modulefile: {modulefilepath}/{luaversion}" )
     with open( f"{modulefilepath}/{luaversion}","w" ) as modulefile:
-        modulefile.write( f"""\
+        modulecontents = f"""\
 {help_string}
 
 {pkg_info}
@@ -252,5 +254,9 @@ def write_module_file( **kwargs ):
 {path_settings}
 
 {system_paths}
+
+{depends}
 """
-                          )
+        if tracing:
+            echo_string( f"Module contents:\n{modulecontents}",**kwargs )
+        modulefile.write( modulecontents )

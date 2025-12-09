@@ -11,12 +11,11 @@ parser.add_argument( '-t','--trace',action='store_true' )
 parser.add_argument(  '-c','--configuration',default="Configuration")
 parser.add_argument( 'actions', nargs='*', help="actions" )
 
-arguments = parser.parse_args()
+arguments  = parser.parse_args()
 configfile = arguments.configuration
+tracing    = arguments.trace
 
-print( f"configuration file: {configfile}" )
 actions = arguments.actions
-print( f"actions: {actions}" )
 
 import MrPackMod.config
 from MrPackMod import config as config
@@ -27,8 +26,9 @@ from MrPackMod import modules as modules
 from MrPackMod import names as names
 from MrPackMod import process as process
 
-def mpm(args):
-    configuration = config.read_config(configfile)
+def mpm(args,tracing=tracing):
+    configuration = config.read_config(configfile,tracing)
+    configuration["tracing"] = tracing
     #print(configuration)
     for action in args:
         print( f"Action: {action}" )
@@ -40,7 +40,7 @@ def mpm(args):
             modules.test_modules( **configuration )
         elif action=="download":
             download.download_from_url( **configuration )
-        elif action=="unpack":
+        elif action in [ "unpack", "untar", ]:
             srcdir_local = names.srcdir_local_name( **configuration )
             download.unpack_from_url( srcdir=srcdir_local,**configuration )
         elif action=="configure":
