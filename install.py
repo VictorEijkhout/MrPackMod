@@ -82,7 +82,9 @@ def cmake_configure( **kwargs ):
     #
     cmakeflags = ""; cmakeflagsplatform = ""; exports = ""
     if standard := kwargs.get("cppstandard"):
-        cmakeflags += f"-D CMAKE_CXX_FLAGS=-std=c++{standard}"
+        cmakeflags += f" -D CMAKE_CXX_FLAGS=-std=c++{standard}"
+    if flags := nonzero_keyword( "cmakeflags",**kwargs ):
+        cmakeflags += f" {flags}"
     cmake = kwargs.get("cmakename","cmake")
     if nonzero_keyword("cmakeuseninja"):
         cmake = f"{cmake} -G Ninja"
