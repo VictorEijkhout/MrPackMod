@@ -9,7 +9,7 @@ import os
 #
 from process import echo_string
 
-def read_config():
+def read_config(configfile):
     configuration_dict = {
         'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
         # paths
@@ -25,7 +25,7 @@ def read_config():
         'buildsystem':"cmake", 
     }
     macros = {}
-    with open("Configuration","r") as configuration_file:
+    with open(configfile,"r") as configuration_file:
         saving = False
         for line in configuration_file.readlines():
             line = line.strip()

@@ -17,7 +17,6 @@ configfile = arguments.configuration
 print( f"configuration file: {configfile}" )
 actions = arguments.actions
 print( f"actions: {actions}" )
-sys.exit(0)
 
 import MrPackMod.config
 from MrPackMod import config as config
@@ -29,7 +28,7 @@ from MrPackMod import names as names
 from MrPackMod import process as process
 
 def mpm(args):
-    configuration = config.read_config()
+    configuration = config.read_config(configfile)
     #print(configuration)
     for action in args:
         print( f"Action: {action}" )
@@ -60,4 +59,4 @@ def mpm(args):
             install.write_module_file( **configuration )
         else: process.error_abort( f"Unknown action: {action}" )
                 
-mpm( args )
+mpm( actions )
