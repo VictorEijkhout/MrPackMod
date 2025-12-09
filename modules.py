@@ -15,6 +15,7 @@ import names
 import process
 from process import isnull,nonnull,echo_string,error_abort
 from process import abort_on_zero_keyword,zero_keyword,nonzero_keyword,nonzero_keyword_or_default
+from process import abort_on_zero_env
 from process import process_execute
 
 def test_modules( **kwargs ):
@@ -196,14 +197,15 @@ f"""\
 def dependencies( **kwargs ):
     tracing = kwargs.get( "tracing" )
     depends = ""
-    if noversion := nonzero_keyword( "dependson",**kwargs ):
+    if prereq := nonzero_keyword( "dependson",**kwargs ):
         if tracing:
-            echo_string( f"depends on: {noversion}" )
-        depends += f"depends_on( \"{noversion}\" )\n"
-    if versions  := nonzero_keyword( "dependsoncurrrent",**kwargs ):
+            echo_string( f"depends on: {prereq}" )
+        depends += f"depends_on( \"{prereq}\" )\n"
+    if curreq  := nonzero_keyword( "dependsoncurrent",**kwargs ):
+        version = abort_on_zero_env( f"TACC_{curreq.upper()}_VERSION" )
         if tracing:
-            echo_string( f"depends on current version of: {versions}" )
-        depends += f"depends_on( \"{versions}/0.0\" )\n"
+            echo_string( f"depends on current: {curreq}/{version}" )
+        depends += f"depends_on( \"{curreq}/{version}\" )\n"
     if family    := nonzero_keyword( "family",**kwargs ):
         if tracing:
             echo_string( f"belongs to family: {family}" )
