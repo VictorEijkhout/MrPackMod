@@ -2,17 +2,22 @@
 
 import sys
 args = sys.argv
-actions = [ "help",
-            "list", "test",
-            "download", "unpack", "configure", "build", "module",
-            ]
-def usage(program):
-    print( f"Usage: {program} action (from download, unpack, configure, build, module)" )
+import argparse
+parser = argparse.ArgumentParser\
+    ( prog="MrPackMod",
+      description="Package installer with LMod support",
+      add_help=True )
+parser.add_argument( '-t','--trace',action='store_true' )
+parser.add_argument(  '-c','--configuration',default="Configuration")
+parser.add_argument( 'actions', nargs='*', help="actions" )
 
-if len(args)==1:
-    usage; sys.exit(0)
-program = args[0]
-args = args[1:]
+arguments = parser.parse_args()
+configfile = arguments.configuration
+
+print( f"configuration file: {configfile}" )
+actions = arguments.actions
+print( f"actions: {actions}" )
+sys.exit(0)
 
 import MrPackMod.config
 from MrPackMod import config as config
