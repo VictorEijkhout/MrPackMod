@@ -11,8 +11,8 @@ import sys
 def echo_string( string,**kwargs ):
     if  terminal:= kwargs.get( "terminal",sys.stdout ):
         print( string,file=terminal )
-    if logfile := kwargs.get( "logfile",None ):
-        print( string,file=logfile )
+    for _,loghandle in kwargs.get("logfiles",{}).items():
+        print( string,file=loghandle )
 
 def trace_string( string,**kwargs ):
     if kwargs.get( "tracing" ):

@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import os
 import sys
 args = sys.argv
 import argparse
@@ -31,6 +32,8 @@ from MrPackMod import process
 def mpm(args,tracing=tracing):
     configuration = config.read_config(configfile,tracing)
     configuration["tracing"] = tracing
+    configuration["logfiles"] = {} # name,handle pairs
+    configuration["scriptdir"] = os.getcwd()
     #print(configuration)
     for action in args:
         print( f"Action: {action}" )

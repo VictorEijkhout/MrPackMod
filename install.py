@@ -32,21 +32,8 @@ def configure_prep( **kwargs ):
     os.mkdir(builddir)
     return srcdir,builddir,prefixdir
 
-def compilers_names( **kwargs ):
-    compilers = { 'CC':"unknown_cc", 'CXX':"unknown_cxx", 'FC':"unknown_fc", }
-    if ( mode := kwargs.get("mode","mode_not_found") ) in [ "mpi","hybrid", ]:
-        compilers["CC"] = "mpicc"; compilers["CXX"] = "mpicxx"; compilers["FC"] = "mpif90"
-    elif mode in [ "seq", "omp", ]:
-        compilers["CC"]  = abort_on_zero_env( "TACC_CC",**kwargs )
-        compilers["CXX"] = abort_on_zero_env( "TACC_CXX",**kwargs )
-        compilers["FC"]  = abort_on_zero_env( "TACC_FC",**kwargs )
-    elif mode == "core":
-        compilers["CC"] = "gcc"; compilers["CXX"] = "g++"; compilers["FC"] = "gfortran"
-    else: raise Exception( "Unknown mode: {mode}" )
-    return compilers
-
 def export_compilers( **kwargs ):
-    compilers = compilers_names( **kwargs )
+    compilers = names.compilers_names( **kwargs )
     cmdline = ""; cont = ""
     for key,val in compilers.items():
         echo_string( f"Setting compiler: {key}={val}",**kwargs )
@@ -75,8 +62,19 @@ def export_flags( **kwargs ):
             cont = " && "
     return cmdline
 
+def open_logfile( logstage,kwargs ):
+    logfile = names.logfile_name( "cmake_configure",**kwargs )
+    loghandle = open( logfile,"w" )
+    kwargs["logfiles"][logfile] = loghandle
+    return logfile,loghandle
+
+def close_logfile( logname,loghandle,kwargs ):
+    kwargs["logfiles"].pop(logname)
+    loghandle.close()
+    
 def cmake_configure( **kwargs ):
     tracing = kwargs.get( "tracing" )
+    logfilename,logfilehandle = open_logfile( "configure_cmake",kwargs ) # note dict!
     srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #
     # flags
@@ -118,8 +116,10 @@ def cmake_configure( **kwargs ):
 "
     process_execute( cmdline,**kwargs,process=shell )
     process_terminate( shell,**kwargs )
+    close_logfile( logfilename,logfilehandle,kwargs )
 
 def cmake_build( **kwargs ):
+    logfilename,logfilehandle = open_logfile( "install_cmake",kwargs ) # note dict!
     #
     # setup directories
     #
@@ -150,8 +150,10 @@ def cmake_build( **kwargs ):
     if extra_targets := nonzero_keyword( "extrainstalltargets" ):
         cmdline = f"{make} {extra_targets}"
         process_execute( cmdline )
+    close_logfile( logfilename,logfilehandle,kwargs )
 
 def autotools_configure( **kwargs ):
+    logfilename,logfilehandle = open_logfile( "configure_autotools",kwargs ) # note dict!
     srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #installext
     #
@@ -194,8 +196,10 @@ def autotools_configure( **kwargs ):
         cmdline += f" {flags}"
     process_execute( cmdline,**kwargs,process=shell )
     process_terminate( shell,**kwargs )
+    close_logfile( logfilename,logfilehandle,kwargs )
     
 def autotools_build( **kwargs ):
+    logfilename,logfilehandle = open_logfile( "install_autotools",kwargs ) # note dict!
     #
     # setup directories
     #
@@ -226,6 +230,7 @@ def autotools_build( **kwargs ):
     if cptoinstall := nonzero_keyword( "cptoinstalldir",**kwargs ):
         echo_string( f"Extra installs: {cptoinstall}",**kwargs )
         process_execute( f"cp -r {cptoinstall} {prefixdir}",**kwargs )
+    close_logfile( logfilename,logfilehandle,kwargs )
 
 def write_module_file( **kwargs ):
     tracing = kwargs.get("tracing")

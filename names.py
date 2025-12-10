@@ -18,12 +18,16 @@ from process import abort_on_nonzero_env,abort_on_zero_env,\
     zero_keyword,nonzero_keyword,abort_on_zero_keyword
 from process import error_abort,requirenonzero,nonnull
 
-##
-## Deescription: compute package name and version,
-## both lowercase
-## in the future we will handle the case of git pulls
-## Result: pair package,version
-##
+####
+#### General names
+####
+
+#
+# compute package name and version,
+# both lowercase
+# in the future we will handle the case of git pulls
+# Result: pair package,version
+#
 def package_names( **kwargs ):
     package = kwargs.get("package").lower()
     version = kwargs.get("packageversion").lower()
@@ -36,9 +40,23 @@ def package_names( **kwargs ):
                  terminal=terminal )
     return package,version
 
-##
-## Description: create a directory for either building or install
-##
+#
+# name of a logfile
+# 
+def logfile_name( logstage,**kwargs ):
+    logfilename = f"{logstage}"
+    _,packageversion = package_names( **kwargs )
+    logfilename += f"_{packageversion}"
+    compiler,cversion,cshortv,mpi,mversion = family_names()
+    logfilename += f"_{compiler}-{cversion}"
+    if mode := nonzero_keyword( "mode",**kwargs ):
+        logfilename += f"_{mpi}-{mversion}"
+    logfilename += ".log"
+    return logfilename
+
+#
+# Create a directory for either building or install
+#
 def create_homedir( **kwargs ):
     root     = kwargs.get( "root",None )
     package  = kwargs.get( "package","nullpackage" )
@@ -67,7 +85,7 @@ def create_homedir( **kwargs ):
 ## Notes:
 ## this is fully based on Lmod environment variables as in use at TACC
 ##
-def compiler_names():
+def family_names():
     try:
         # in jail we can run without compiler loaded
         compiler = os.environ['TACC_FAMILY_COMPILER']
@@ -79,12 +97,25 @@ def compiler_names():
     except:
         return None,None,None,None,None
 
+def compilers_names( **kwargs ):
+    compilers = { 'CC':"unknown_cc", 'CXX':"unknown_cxx", 'FC':"unknown_fc", }
+    if ( mode := kwargs.get("mode","mode_not_found") ) in [ "mpi","hybrid", ]:
+        compilers["CC"] = "mpicc"; compilers["CXX"] = "mpicxx"; compilers["FC"] = "mpif90"
+    elif mode in [ "seq", "omp", ]:
+        compilers["CC"]  = abort_on_zero_env( "TACC_CC",**kwargs )
+        compilers["CXX"] = abort_on_zero_env( "TACC_CXX",**kwargs )
+        compilers["FC"]  = abort_on_zero_env( "TACC_FC",**kwargs )
+    elif mode == "core":
+        compilers["CC"] = "gcc"; compilers["CXX"] = "g++"; compilers["FC"] = "gfortran"
+    else: raise Exception( "Unknown mode: {mode}" )
+    return compilers
+
 ##
 ## Description: compute single system/compiler/mpi identifier
 ##
 def environment_code( mode ):
     systemcode = os.environ['TACC_SYSTEM'] # systemnames
-    compilercode,compilerversion,compilershortversion,mpicode,mpiversion = compiler_names()
+    compilercode,compilerversion,compilershortversion,mpicode,mpiversion = family_names()
     if compilercode is None:
         # we are running in jail with only system compilers
         return systemcode
@@ -95,7 +126,7 @@ def environment_code( mode ):
         return envcode
 
 def systemnames():
-    compilercode,compilerversion,compilershortversion,mpicode,mpiversion = compiler_names()
+    compilercode,compilerversion,compilershortversion,mpicode,mpiversion = family_names()
     return mpicode,mpiversion
 
 def install_extension( **kwargs ):
