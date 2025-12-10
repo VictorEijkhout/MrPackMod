@@ -11,9 +11,12 @@ import sys
 #
 # my own modules
 #
+import names
 import process
-from process import echo_string,error_abort,abort_on_nonzero_env,abort_on_zero_env,abort_on_zero_keyword
-from process import requirenonzero,nonnull,nonzero_keyword
+from process import echo_string,trace_string
+from process import abort_on_nonzero_env,abort_on_zero_env,\
+    zero_keyword,nonzero_keyword,abort_on_zero_keyword
+from process import error_abort,requirenonzero,nonnull
 
 ##
 ## Deescription: compute package name and version,
@@ -116,13 +119,13 @@ def srcdir_name( **kwargs ):
     return f"{downloaddir}/{srcdir_local}"
 
 def builddir_name( **kwargs ):
-    package,packageversion = package_names( **kwargs )
-    installext = install_extension( **kwargs )
     if bdir := nonzero_keyword( "root",**kwargs ):
         builddir = bdir
     else:
         homedir = create_homedir( **kwargs )
         builddir = homedir
+    package,packageversion = package_names( **kwargs )
+    installext = install_extension( **kwargs )
     builddir += f"/{package}/build-{installext}"
     return builddir
 
@@ -136,11 +139,11 @@ def prefixdir_name( **kwargs ):
     else:
         # path & "installation"
         if nonnull( idir:=kwargs.get("installroot","") ):
-            echo_string( f"prefixdir from installroot: {idir}",**kwargs )
+            trace_string( f"prefixdir from installroot: {idir}",**kwargs )
             prefixdir = f"{idir}/installation"
         else: 
             hdir = create_homedir( **kwargs )
-            echo_string( f"prefixdir from homedir: {hdir}",**kwargs )
+            trace_string( f"prefixdir from homedir: {hdir}",**kwargs )
             prefixdir = f"{hdir}/installation"
         # attach package name
         if nonnull( mname:=kwargs.get("modulename","") ):
@@ -156,6 +159,30 @@ def prefixdir_name( **kwargs ):
         echo_string( f"using subdir for installvariant: {var}" )
         prefixdir = f"{prefixdir}/{var}"
     return prefixdir
+
+def package_dir_names( **kwargs ):
+    prefixdir = names.prefixdir_name( **kwargs )
+    # lib
+    if zero_keyword( "nolib",**kwargs ):
+        libdir = f"{prefixdir}/lib64"
+        if not os.path.isdir( libdir ):
+            libdir = f"{prefixdir}/lib"
+            if not os.path.isdir( libdir ):
+                raise Exception( "Could not find lib or lib64 dir" )
+    else: libdir = ""
+    # inc
+    if zero_keyword( "noinc",**kwargs ):
+        incdir = f"{prefixdir}/include"
+        if not os.path.isdir( incdir ):
+            raise Exception( "Could not find include dir" )
+    else: incdir = ""
+    # bin
+    if nonzero_keyword( "hasbin",**kwargs ):
+        bindir = f"{prefixdir}/bin"
+        if not os.path.isdir( bindir ):
+            raise Exception( "Could not find bin dir" )
+    else: bindir = ""
+    return prefixdir,libdir,incdir,bindir
 
 def modulefile_path_and_name( **kwargs ):
     abort_on_nonzero_env( "MODULEDIRSET" )
@@ -193,8 +220,6 @@ def module_names( **kwargs):
     if alt := nonzero_keyword( "modulenamealt" ):
         modulename = alt
     moduleversion = packageversion
-    if nonnull( vt := kwargs.get("installvariant") ):
-        moduleversion += f"-{vt}"
     if nonnull( mx := kwargs.get("moduleversionextra") ):
         moduleversion += f"-{mx}"
     return modulename,moduleversion

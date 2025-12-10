@@ -14,6 +14,10 @@ def echo_string( string,**kwargs ):
     if logfile := kwargs.get( "logfile",None ):
         print( string,file=logfile )
 
+def trace_string( string,**kwargs ):
+    if kwargs.get( "tracing" ):
+        echo_string( string,**kwargs )
+
 def error_abort( string,**kwargs ):
     echo_string( f"ERROR {string}" )
     sys.exit(1)

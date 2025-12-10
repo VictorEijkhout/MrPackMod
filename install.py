@@ -76,6 +76,7 @@ def export_flags( **kwargs ):
     return cmdline
 
 def cmake_configure( **kwargs ):
+    tracing = kwargs.get( "tracing" )
     srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #
     # flags
@@ -95,7 +96,7 @@ def cmake_configure( **kwargs ):
     if static := kwargs.get("buildstaticlibs"):
         buildsharedlibs = "OFF"
     else: buildsharedlibs = "ON"
-    if nonnull( source := kwargs.get("cmakesource") ):
+    if nonnull( source := kwargs.get("cmakesubdir") ):
         cmakesourcedir = f"-S {srcdir}/{source} -B {builddir}"
     else: cmakesourcedir = f"{srcdir}"
     #

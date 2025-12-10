@@ -52,45 +52,27 @@ def test_modules( **kwargs ):
         except: continue
     if error: sys.exit(1)
 
-def package_dir_names( **kwargs ):
-    prefixdir = names.prefixdir_name( **kwargs )
-    # lib
-    if zero_keyword( "nolib",**kwargs ):
-        libdir = f"{prefixdir}/lib64"
-        if not os.path.isdir( libdir ):
-            libdir = f"{prefixdir}/lib"
-            if not os.path.isdir( libdir ):
-                raise Exception( "Could not find lib or lib64 dir" )
-    else: libdir = ""
-    # inc
-    if zero_keyword( "noinc",**kwargs ):
-        incdir = f"{prefixdir}/include"
-        if not os.path.isdir( incdir ):
-            raise Exception( "Could not find include dir" )
-    else: incdir = ""
-    # bin
-    if nonzero_keyword( "hasbin",**kwargs ):
-        bindir = f"{prefixdir}/bin"
-        if not os.path.isdir( bindir ):
-            raise Exception( "Could not find bin dir" )
-    else: bindir = ""
-    return prefixdir,libdir,incdir,bindir
-
 def module_help_string( **kwargs ):
     package,packageversion   = names.package_names( **kwargs )
     modulename,moduleversion = names.module_names( **kwargs )
 
     about = abort_on_zero_keyword( "about",**kwargs )
     about += "\n"
-    url      = kwargs.get( "url" )
-    software = kwargs.get( "softwareurl" )
-    if url      : about += f"Homepage: {url}\n"
-    if software : about += f"Software: {software}\n"
+    if notes    := nonzero_keyword( "modulenotes",**kwargs ):
+        about += f"Notes: {notes}\n"
+    if url      := nonzero_keyword( "url",**kwargs ):
+        about += f"Homepage: {url}\n"
+    if software := nonzero_keyword( "softwareurl",**kwargs ):
+        about += f"Software: {software}\n"
 
     vars = f"TACC_{package.upper()}_DIR"
-    for sub in [ "inc", "lib", "bin", ]:
-        if dir := kwargs.get( f"{sub}dir" ):
-            vars += f", TACC_{package.upper()}_{sub.upper()}"
+    _,libdir,incdir,bindir = names.package_dir_names( **kwargs )
+    if nonnull( libdir ):
+            vars += f", TACC_{package.upper()}_LIB"
+    if nonnull( incdir ):
+            vars += f", TACC_{package.upper()}_INC"
+    if nonnull( bindir ):
+            vars += f", TACC_{package.upper()}_BIN"
 
     notes = ""
     cmake     = kwargs.get( "prefixpathset" )
@@ -102,7 +84,7 @@ def module_help_string( **kwargs ):
     return \
 f"""\
 local helpMsg = [[
-Package: {package}/{moduleversion}
+Package: {package}/{packageversion}
 
 {about}
 The {package} modulefile defines the following variables:
@@ -124,20 +106,20 @@ def path_settings( **kwargs ):
     package,packageversion   = names.package_names( **kwargs )
     modulename,moduleversion = names.module_names( **kwargs )
     modulenamealt = kwargs.get("modulenamealt","").lower()
-    prefixdir                = names.prefixdir_name( **kwargs )
 
     paths = ""
     info  = ""
+    prefixdir,libdir,incdir,bindir = names.package_dir_names( **kwargs )
     for name in [ modulename, modulenamealt, ]:
         if name=="": continue
         for sub,val in [ ["VERSION",f"\"{moduleversion}\""], ["DIR","prefixdir"], ]:
             for tgt in [ "TACC", "LMOD", ] :
                 info += f"setenv( \"{tgt}_{name.upper()}_{sub.upper()}\", {val} )\n"
-        for sub in [ "inc", "lib", "bin", ]:
-            if dir := kwargs.get( f"{sub}dir" ):
-                ext = re.sub( f"{prefixdir}/","",dir ).lstrip("/") # why the lstrip?
+        for subname,subdir in [ ["inc",incdir], ["lib",libdir], ["bin",bindir], ]:
+            if nonnull(subdir):
+                ext = re.sub( f"{prefixdir}/","",subdir ).lstrip("/") # why the lstrip?
                 for tgt in [ "TACC", "LMOD", ] :
-                    paths += f"setenv( \"{tgt}_{name.upper()}_{sub.upper()}\", \
+                    paths += f"setenv( \"{tgt}_{name.upper()}_{subname.upper()}\", \
 pathJoin( prefixdir,\"{ext}\" ) )\n"
 
     return \
