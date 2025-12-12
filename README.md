@@ -1,3 +1,131 @@
 # MrPackMod: Package installer with LMod integration
 
-(this is a rewrite of https://github.com/VictorEijkhout/make-support-files into python)
+Usage:
+``` 
+mpm.py [ -c Configuration ] [ -t ] keywords
+```
+where keywords: `test download unpack configure build module`, 
+or `install` for `configure build module`.
+This can download, configure, install a package, 
+and generate LMod modules.
+
+## Configuration file
+
+By default, `mpm` looks for a file `Configuration`, but the `-c` option
+allows you to specify another name.
+The configuration file contains lines:
+```
+# comment
+key = value
+let keymacro = value
+```
+Typical keys are
+```
+PACKAGE = somepackage
+let PACKAGEVERSION = 1.0.0
+ABOUT = This package is for something
+BUILDSYSTEM = cmake
+CMAKEFLAGS = \
+ -D FOO=ON \
+ -D BAR=OFF
+DOWNLOADURL = https://github.com/SomePackage/v${PACKAGEVERSION}.tar.gz
+```
+The `let` keyword indicates a macro, which can be used in other settings,
+such as here the download link.
+
+## Environment
+
+The MrPackMod system relies on a couple of environment variables:
+- `TACC_SYSTEM` : this is used for path generation in case you have multiple systems on a shared file system
+- `TACC_FAMILY_COMPILER `, `TACC_FAMILY_COMPILER_VERSION`, `TACC_FAMILY_MPI`, `TACC_FAMILY_MPI_VERSION` : these are mostly used for module path generation
+Certain environment variables can be overriden:
+- `PACKAGEROOT` : packages are downloaded and unpacked in `${PACKAGEROOT}/${PACKAGENAME}`; override this with the `DOWNLOADPATH` setting.
+  The packageroot is also used as the default location of any builddirectory; override this with `BUILDDIRROOT`. (!!!not yet implemented!!!)
+- `INSTALLROOT` : the package is installed in `${INSTALLROOT}/installation-${PACKAGE}-${EXTENSION}` where the extension is compound of system, compiler, mpi.
+  Override this whole path with `INSTALLPATH`.
+- `MODULEROOT` : this is used to build up the `${MODULEROOT}/{Core,Compiler,MPI}/et/cetera` path as in the LMod documentation.
+  Override the whole of this path with `MODULEDIRSET` (!!!not yet implemented!!!)
+
+## Downloading
+
+The `DOWNLOADURL` setting is used in the `download` action. It supports `tgz`, `tar.gz`, `xz`, and `zip` extensions. 
+(!!!add bz2!!!)
+This URL typically contains the compulsory `PACKAGEVERSION` setting.
+
+A subsequent `unpack` action unpacks the downloaded file and renames the result to a standard naming scheme of
+`${PACKAGE}-${PACKAGEVERSION}`.
+(!!!not yet: the `retar` action then packs up the unpacked and renamed bundle to `${PACKAGE}-${PACKAGEVERSION}.tgz`. This is useful in an `rpmbuild` context.!!!)
+
+(!!!not yet: there is a `GITREPO` setting and corresponding `clone` action!!!)
+
+## Configure
+
+The `BUILDSYSTEM` setting can be `cmake` or `autotools`.
+Correspondingly, the `CMAKEFLAGS` and `CONFIGUREFLAGS` settings are used.
+- CMake uses a number of default flags such as:
+  - `-D CMAKE_BUILD_TYPE=RelWithDebInfo`. Override this with `CMAKEBUILDTYPE`.
+  - `-D BUILD_SHARED_LIBS=ON`. Override this with a nonzero value for `BUILDSTATICLIBS`.
+- Autotools looks for `configure`, `configure.ac`, `autogen.sh` and treats them accordingly. Further settings:
+  - `CONFIGURESUBDIR` indicates that the configure script is in a subdirectory;
+  - By default an option `--prefix=/install/dir` is used.
+    If your package uses `-prefix` or so (pdtoolkit), specify `PREFIXOPTION = -prefix` and such.
+
+CMake will do the configuration in a builddirectory that is created alongside the source directory.
+Override this with the `BUILDDIRROOT` setting.
+Autotools will do the configuration in the source directory; 
+packages that support a separate builddirectory can use the `CONFIGINBUILDDIR` setting.
+
+## Building
+
+After configuration, `make && make install` is done in the builddirectory, for which see the previous point.
+The `make` is parallel, using the `JCOUNT` setting.
+A target can be specified with `MAKEBUILDTARGET` (enzo).
+The setting `EXTRABUILDTARGETS` is used in a second `make` call (sqlite).
+
+## Module
+
+Prerequisite modules are given as
+```
+MODULES = zlib hdf5
+```
+where optionally version numbers can be attached: `hdf5/<2` or `hdf5/1.>12`.
+The `configure` and `build` actions tests for these modules to be loaded.
+
+### Module file
+
+An LMod module file `${MODULENAME}/${PACKAGEVERSION}.lua` is generated on an automatically generated path, depending on the `MODE` setting:
+- `core` : `${MODULEROOT}/Core`.
+- `seq` or `omp` : `${MODULEROOT}/Compiler/${TACC_FAMILY_COMPILER}/${TACC_FAMILY_COMPILER_VERSION}`
+- `mpi` or `hybrid` : `${MODULEROOT}/MPI/${TACC_FAMILY_COMPILER}/${TACC_FAMILY_COMPILER_VERSION}/${TACC_MPI_FAMILY}/${TACC_MPI_FAMILY_VERSION}`
+
+Here `MODULENAME` is `PACKAGE`, unless the setting `MODULENAME` is explicitly used;
+see for instance `MODULENAME = phdf5` for the parallel version of `PACKAGE = hdf5`.
+
+Alternatively, use `MODULEDIRSET` for a fully explicit path.
+
+### Lib,Inc,Bin and such
+
+By default, the module will have variables for an include and lib directory.
+- If there is not include dir, set `NOINC = 1`;
+- If there is no lib dir, set `NOLIB = 1`;
+- If there is a bin dir, set `HASBIN = 1`.
+
+The `INCLUDE`, `PATH`, `LD_LIBRARY_PATH` variables are updated accordingly.
+
+The settings `PYTHONPATHABS`, `PYTHONPATHREL` update the `PYTHONPATH` 
+variable with an absolute path, and a path relative to the installation respectively.
+
+### Discoverability
+
+If the package generates `.cmake` files, specify `PREFIXPATHSET = 1`.
+If the package generates `.pc` files, specify 
+- `PKGCONFIG = path` for a path relative to the installation, or
+- `PKGCONFIGLIB = path` for a path relative to the lib directory.
+
+### More
+
+More settings:
+- `ABOUT` is a compulsory one-line description of the package;
+- `URL`, `SOFTWAREURL` are URLs for homepage and software page;
+- `DEPENDSON = package` : inserts a `depends_on( "package" )` line;
+- `DEPENDSONCURRENT = package` generates a `depends_on` clause that additionally includes the version number of the currently loaded package.
