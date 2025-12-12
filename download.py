@@ -14,21 +14,12 @@ from process import echo_string,abort_on_zero_keyword
 import names
 
 def cd_download_path( **kwargs ):
-    system   = kwargs.get("system",None)
-    compiler = kwargs.get("compiler",None)
-    root     = kwargs.get("root",None)
-    package  = kwargs.get("package","nullpackage")
-    version  = kwargs.get("version","0.0.0")
     downloadpath = kwargs.get("downloadpath","")
     if not re.match( r'[ \t\n]*$',downloadpath ):
         echo_string( f"Change dir to downloadpath: {downloadpath}",**kwargs )
         os.chdir( downloadpath )
     else:
-        homedir = names.create_homedir\
-            ( \
-              system=system,compiler=compiler,
-              root=root,package=package,version=version,
-             )
+        homedir = names.create_homedir( **kwargs )
         os.chdir(homedir)
 
 def download_from_url( **kwargs, ):

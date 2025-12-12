@@ -76,7 +76,7 @@ def module_help_string( **kwargs ):
 
     notes = ""
     cmake     = kwargs.get( "prefixpathset" )
-    pkgconfig = kwargs.get( "pkgconfig" )
+    pkgconfig = kwargs.get( "pkgconfig" ) or kwargs.get( "pkgconfiglib" )
     if cmake    : notes += "Discoverable by CMake through find_package.\n"
     if pkgconfig: notes += "Discoverable by CMake through pkg-config.\n"
     notes += f"\n(modulefile generated {datetime.date.today()})"
