@@ -253,7 +253,9 @@ def write_module_file( **kwargs ):
     modulefilepath,luaversion = names.modulefile_path_and_name( **kwargs )
     if not os.path.isdir(modulefilepath):
         echo_string( f"First create module dir: {modulefilepath}",**kwargs )
-        os.mkdir( modulefilepath )
+        # create directories recursively
+        os.makedirs( modulefilepath,exist_ok=True )
+        # too limited os.mkdir( modulefilepath )
     echo_string( f"Writing modulefile: {modulefilepath}/{luaversion}" )
     with open( f"{modulefilepath}/{luaversion}","w" ) as modulefile:
         modulecontents = f"""\

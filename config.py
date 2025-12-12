@@ -33,11 +33,11 @@ def read_config(configfile,tracing=False):
             line = line.strip()
             if re.match( r'^#',     line ): continue
             if re.match( r'^[ \t]*$',line ): continue
-            if letdef := re.search( r'^let\s*([A-Z0-9]*)\s*=\s*(.*)$',line ):
+            if letdef := re.search( r'^let\s*([A-Za-z0-9_]*)\s*=\s*(.*)$',line ):
                 key,val = letdef.groups()
                 # macro with literal key
                 macros[key] = val
-            elif keyval := re.search( r'^\s*([A-Z0-9]*)\s*=\s*(.*)$',line ):
+            elif keyval := re.search( r'^\s*([A-Za-z0-9_]*)\s*=\s*(.*)$',line ):
                 key,val = keyval.groups()
             elif saving:
                 # we inherit key from the previous iteration

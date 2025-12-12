@@ -144,7 +144,7 @@ def system_paths( **kwargs ):
                 envs += f"prepend_path( \"PATH\", {path} )\n"
     for env,var in [ ["bindir","PATH"],
                  ["pkgconfig","PKG_CONFIG_PATH"], ["pkgconfiglib","PKG_CONFIG_PATH"],
-                 [ "cmakeprefix","CMAKE_PREFIX_PATH"],
+                 ["prefixpathset","CMAKE_PREFIX_PATH"],
                  ["pythonpathabs","PYTHONPATH"], ["pythonpathrel","PYTHONPATH"],
                 ]:
         if val := nonzero_keyword( env,**kwargs ):
@@ -159,7 +159,7 @@ def system_paths( **kwargs ):
                     # else relative to prefix & custom path
                 path = f"pathJoin( prefixdir,\"{val}\" )"
                 envs += f"prepend_path( \"{var}\", {path} )\n"
-            elif env in [ "cmakeprefix",
+            elif env in [ "prefixpathset",
                          ]:
                 #
                 # add prefix path itself
@@ -191,5 +191,5 @@ def dependencies( **kwargs ):
     if family    := nonzero_keyword( "family",**kwargs ):
         if tracing:
             echo_string( f"belongs to family: {family}" )
-        depends += f"family( {family} )\n"
+        depends += f"family( \"{family}\" )\n"
     return depends

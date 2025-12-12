@@ -8,12 +8,14 @@ parser = argparse.ArgumentParser\
     ( prog="MrPackMod",
       description="Package installer with LMod support",
       add_help=True )
+parser.add_argument( '-j','--jcount',default='6' )
 parser.add_argument( '-t','--trace',action='store_true' )
 parser.add_argument(  '-c','--configuration',default="Configuration")
 parser.add_argument( 'actions', nargs='*', help="test configure build module, install=configure+build, module" )
 
 arguments  = parser.parse_args()
 configfile = arguments.configuration
+jcount     = arguments.jcount
 tracing    = arguments.trace
 
 actions = arguments.actions
@@ -29,12 +31,13 @@ from MrPackMod import modules
 from MrPackMod import names 
 from MrPackMod import process
 
-def mpm(args,tracing=tracing):
+def mpm( args,**kwargs ):
     configuration = config.read_config(configfile,tracing)
-    configuration["tracing"] = tracing
+    for arg,val in kwargs.items():
+        configuration[arg] = val
     configuration["logfiles"] = {} # name,handle pairs
     configuration["scriptdir"] = os.getcwd()
-    #print(configuration)
+    print(configuration)
     for action in args:
         print( f"Action: {action}" )
         if action=="help":
@@ -64,4 +67,4 @@ def mpm(args,tracing=tracing):
             install.write_module_file( **configuration )
         else: process.error_abort( f"Unknown action: {action}" )
                 
-mpm( actions )
+mpm( actions,tracing=tracing,jcount=jcount )

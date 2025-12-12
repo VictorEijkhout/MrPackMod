@@ -199,19 +199,19 @@ def package_dir_names( **kwargs ):
         if not os.path.isdir( libdir ):
             libdir = f"{prefixdir}/lib"
             if not os.path.isdir( libdir ):
-                raise Exception( "Could not find lib or lib64 dir" )
+                raise Exception( "Could not find lib or lib64 dir; maybe set NOLIB?" )
     else: libdir = ""
     # inc
     if zero_keyword( "noinc",**kwargs ):
         incdir = f"{prefixdir}/include"
         if not os.path.isdir( incdir ):
-            raise Exception( "Could not find include dir" )
+            raise Exception( "Could not find include dir, maybe set NOINC?" )
     else: incdir = ""
     # bin
     if nonzero_keyword( "hasbin",**kwargs ):
         bindir = f"{prefixdir}/bin"
         if not os.path.isdir( bindir ):
-            raise Exception( "Could not find bin dir" )
+            raise Exception( "Could not find bin dir but HASBIN was specified" )
     else: bindir = ""
     return prefixdir,libdir,incdir,bindir
 
