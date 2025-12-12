@@ -7,7 +7,7 @@ import os
 #
 # my modules
 #
-from process import echo_string
+from process import echo_string,nonnull,nonzero_env
 
 def read_config(configfile,tracing=False):
     configuration_dict = {
@@ -36,9 +36,13 @@ def read_config(configfile,tracing=False):
             if letdef := re.search( r'^let\s*([A-Za-z0-9_]*)\s*=\s*(.*)$',line ):
                 key,val = letdef.groups()
                 # macro with literal key
-                macros[key] = val
+                envval = os.getenv( key )
+                if nonnull( envval ):
+                    macros[key] = envval
+                else: macros[key] = val
             elif keyval := re.search( r'^\s*([A-Za-z0-9_]*)\s*=\s*(.*)$',line ):
                 key,val = keyval.groups()
+                envval = os.getenv( key )
             elif saving:
                 # we inherit key from the previous iteration
                 # we also inherit val & extend it with the current line
@@ -57,9 +61,14 @@ def read_config(configfile,tracing=False):
             for m in macros:
                 searchstring = '${'+m+'}'
                 val = val.replace( searchstring,macros[m] )
-            configuration_dict[key] = val
-            if tracing:
-                echo_string( f"Setting: {key} = {val}" )
+            if nonnull( envval ):
+                configuration_dict[key] = envval
+                if tracing:
+                    echo_string( f"Setting: {key} = {envval} from environment" )
+            else:
+                configuration_dict[key] = val
+                if tracing:
+                    echo_string( f"Setting: {key} = {val} from config" )
     if tracing:
         print(configuration_dict)
     return configuration_dict
