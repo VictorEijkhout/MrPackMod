@@ -33,12 +33,13 @@ DOWNLOADURL = https://github.com/SomePackage/v${PACKAGEVERSION}.tar.gz
 The `let` keyword indicates a macro, which can be used in other settings,
 such as here the download link.
 
-## Environment
+## Global settings
 
-The MrPackMod system relies on a couple of environment variables:
-- `TACC_SYSTEM` : this is used for path generation in case you have multiple systems on a shared file system
-- `TACC_FAMILY_COMPILER `, `TACC_FAMILY_COMPILER_VERSION`, `TACC_FAMILY_MPI`, `TACC_FAMILY_MPI_VERSION` : these are mostly used for module path generation
-Certain environment variables can be overriden:
+The MrPackMod system relies on a couple of global variables. 
+- `SYSTEM` : this is used for path generation in case you have multiple systems on a shared file system
+- `COMPILER `, `COMPILER_VERSION`, `MPI`, `MPI_VERSION` : these are mostly used for module path generation.
+- 
+Certain environment variables can be overriden in the configuration file (see above):
 - `PACKAGEROOT` : packages are downloaded and unpacked in `${PACKAGEROOT}/${PACKAGENAME}`; override this with the `DOWNLOADPATH` setting.
   The packageroot is also used as the default location of any builddirectory; override this with `BUILDDIRROOT`. (!!!not yet implemented!!!)
 - `INSTALLROOT` : the package is installed in `${INSTALLROOT}/installation-${PACKAGE}-${EXTENSION}` where the extension is compound of system, compiler, mpi.
@@ -46,6 +47,25 @@ Certain environment variables can be overriden:
 - `MODULEROOT` : this is used to build up the `${MODULEROOT}/{Core,Compiler,MPI}/et/cetera` path as in the LMod documentation.
   Override the whole of this path with `MODULEDIRSET` (!!!not yet implemented!!!)
 
+These can be set through a file called `.mrpackmodrc`, which is searched in 1) the current directory 2) one level back, 
+to accomodate the case where you have one large "software" directory with each package a subdirectory, and
+3) your home directory. Syntax:
+```
+# Comment about my settings
+SYSTEM = MyLaptop
+```
+
+On TACC systems these settings can be set through environment variables (!!!this needs to be generalized!!!):
+- `TACC_SYSTEM` : for the `SYSTEM` setting
+- `TACC_FAMILY_COMPILER `, `TACC_FAMILY_COMPILER_VERSION`, `TACC_FAMILY_MPI`, `TACC_FAMILY_MPI_VERSION` : for the `COMPILER` and `MPI` settings.
+Certain environment variables can be overriden:
+- `PACKAGEROOT` : packages are downloaded and unpacked in `${PACKAGEROOT}/${PACKAGENAME}`; override this with the `DOWNLOADPATH` setting.
+  The packageroot is also used as the default location of any builddirectory; override this with `BUILDDIRROOT`. (!!!not yet implemented!!!)
+- `INSTALLROOT` : the package is installed in `${INSTALLROOT}/installation-${PACKAGE}-${EXTENSION}` where the extension is compound of system, compiler, mpi.
+  Override this whole path with `INSTALLPATH`.
+- `MODULEROOT` : this is used to build up the `${MODULEROOT}/{Core,Compiler,MPI}/et/cetera` path as in the LMod documentation.
+  Override the whole of this path with `MODULEDIRSET` (!!!not yet implemented!!!)
+  
 ## Downloading
 
 The `DOWNLOADURL` setting is used in the `download` action. It supports `tgz`, `tar.gz`, `xz`, and `zip` extensions. 
