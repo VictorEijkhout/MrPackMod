@@ -9,18 +9,45 @@ import os
 #
 from process import echo_string,nonnull,nonzero_env
 
+def setting_from_env_or_rc( name,env,default,rc_files ):
+    val = ""
+    for file in rc_files:
+        with open( file,"r" ) as rc:
+            for line in rc.readlines():
+                line = line.strip()
+                if re.match( "\s*#",line ): continue
+                if re.match( name,line ):
+                    val = re.search( f"^\s*{name}\s*=\s*([A-Za-z0-9_]+)\s*$",line ).groups()[0]
+                    #print( f"found setting for {name}: {val}" )
+                    return val
+    return os.getenv( env,default )
+
+
 def read_config(configfile,tracing=False):
+    rc_name = ".mrpackmodrc"
+    rc_files = [ rc for rc in [ rc_name, f"../{rc_name}",
+                                f"{os.path.expanduser('~')}/{rc_name}" 
+                               ] if os.path.exists(rc) ]
+    print( f"found rc files: {rc_files}" )
     configuration_dict = {
-        'system':os.getenv("TACC_SYSTEM","UNKNOWN_SYSTEM"),
+        'system':setting_from_env_or_rc(
+            "SYSTEM","TACC_SYSTEM","UNKNOWN_SYSTEM",rc_files),
         # paths
-        'root':os.getenv("PACKAGEROOT",os.getenv("HOME")),
-        'installroot':os.getenv("INSTALLROOT","NO_INSTALLROOT_GIVEN"),
-        'moduleroot':os.getenv("MODULEROOT","NO_MODULEROOT_GIVEN"),
+        'packageroot':setting_from_env_or_rc(
+            "PACKAGEROOT", "PACKAGEROOT","NO_PACKAGE_ROOT_GIVEN",rc_files),
+        'installroot':setting_from_env_or_rc(
+            "INSTALLROOT", "INSTALLROOT","NO_INSTALLROOT_GIVEN",rc_files),
+        'moduleroot':setting_from_env_or_rc(
+            "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files),
         # compiler
-        'compiler':os.getenv("TACC_FAMILY_COMPILER","UNKNOWN_COMPILER"),
-        'compilerversion':os.getenv("TACC_FAMILY_COMPILER_VERSION","UNKNOWN_COMPILER_VERSION"),
-        'mpi':os.getenv("TACC_FAMILY_MPI","UNKNOWN_MPI"),
-        'mpiversion':os.getenv("TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION"),
+        'compiler':setting_from_env_or_rc(
+            "COMPILER", "TACC_FAMILY_COMPILER","UNKNOWN_COMPILER",rc_files),
+        'compilerversion':setting_from_env_or_rc(
+            "COMPILERVERSION", "TACC_FAMILY_COMPILER_VERSION","UNKNOWN_COMPILER_VERSION",rc_files),
+        'mpi':setting_from_env_or_rc(
+            "MPI", "TACC_FAMILY_MPI","UNKNOWN_MPI",rc_files),
+        'mpiversion':setting_from_env_or_rc(
+            "MPIVERSION", "TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION",rc_files),
         # default value:
         'buildsystem':"cmake", 
     }

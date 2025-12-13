@@ -14,7 +14,7 @@ import sys
 import names
 import process
 from process import echo_string,trace_string
-from process import abort_on_nonzero_env,abort_on_zero_env,\
+from process import abort_on_null,abort_on_nonzero_env,abort_on_zero_env,\
     zero_keyword,nonzero_keyword,abort_on_zero_keyword
 from process import error_abort,requirenonzero,nonnull
 
@@ -47,7 +47,7 @@ def logfile_name( logstage,**kwargs ):
     logfilename = f"{logstage}"
     _,packageversion = package_names( **kwargs )
     logfilename += f"_{packageversion}"
-    compiler,cversion,cshortv,mpi,mversion = family_names()
+    system,compiler,cversion,cshortv,mpi,mversion = family_names()
     logfilename += f"_{compiler}-{cversion}"
     if mode := nonzero_keyword( "mode",**kwargs ):
         logfilename += f"_{mpi}-{mversion}"
@@ -58,7 +58,7 @@ def logfile_name( logstage,**kwargs ):
 # Create a directory for either building or install
 #
 def create_homedir( **kwargs ):
-    root     = kwargs.get( "root",None )
+    root     = kwargs.get( "packageroot",None )
     package  = kwargs.get( "package","nullpackage" )
     homedir  = kwargs.get( "homedir",None )
     terminal = kwargs.get( "terminal",None )
@@ -81,21 +81,22 @@ def create_homedir( **kwargs ):
 
 ##
 ## Description: compute compiler & mpi name & version
-## Result: quadruple cname,cversion,mname,mversion
-## Notes:
-## this is fully based on Lmod environment variables as in use at TACC
+## Result: quintuple system,cname,cversion,mname,mversion
 ##
-def family_names():
+def family_names( **kwargs ):
     try:
         # in jail we can run without compiler loaded
-        compiler = os.environ['TACC_FAMILY_COMPILER']
-        cversion = os.environ['TACC_FAMILY_COMPILER_VERSION']
-        cshortv = re.sub( r'^([^\.]*)\.([^\.]*)(\.*)?$',r'\1\2',cversion ) # DOESN'T WORK
-        mpi = os.environ['TACC_FAMILY_MPI']
-        mversion = os.environ['TACC_FAMILY_MPI_VERSION']
-        return compiler,cversion,cshortv,mpi,mversion
+        system   = nonzero_keyword("system",**kwargs)
+        compiler = nonzero_keyword("compiler",**kwargs)
+        cversion = nonzero_keyword("compilerversion",**kwargs)
+        cshortv  = cversion
+        # re.sub( r'^([^\.]*)\.([^\.]*)(\.*)?$',r'\1\2',cversion ) # DOESN'T WORK
+        mpi      = nonzero_keyword("mpi",**kwargs)
+        mversion = nonzero_keyword("mpiversion",**kwargs)
+        return system,compiler,cversion,cshortv,mpi,mversion
     except:
-        return None,None,None,None,None
+        print( "Deduce running in jail" )
+        return None,None,None,None,None,None
 
 def compilers_names( **kwargs ):
     compilers = { 'CC':"unknown_cc", 'CXX':"unknown_cxx", 'FC':"unknown_fc", }
@@ -113,9 +114,10 @@ def compilers_names( **kwargs ):
 ##
 ## Description: compute single system/compiler/mpi identifier
 ##
-def environment_code( mode ):
-    systemcode = os.environ['TACC_SYSTEM'] # systemnames
-    compilercode,compilerversion,compilershortversion,mpicode,mpiversion = family_names()
+def environment_code( **kwargs ):
+    mode = abort_on_zero_keyword( "mode",**kwargs )
+    systemcode,compilercode,compilerversion,compilershortversion,mpicode,mpiversion = \
+        family_names( **kwargs )
     if compilercode is None:
         # we are running in jail with only system compilers
         return systemcode
@@ -131,7 +133,7 @@ def systemnames():
 
 def install_extension( **kwargs ):
     package,packageversion = package_names( **kwargs )
-    envcode = environment_code( kwargs.get("mode") )
+    envcode = abort_on_null( environment_code( **kwargs ),"environment code for install ext" )
     installext = f"{packageversion}-{envcode}"
     if nonnull( iext := kwargs.get( "installext","" ) ):
         installext = f"{installext}-{iext}"
@@ -150,7 +152,7 @@ def srcdir_name( **kwargs ):
     return f"{downloaddir}/{srcdir_local}"
 
 def builddir_name( **kwargs ):
-    if bdir := nonzero_keyword( "root",**kwargs ):
+    if bdir := nonzero_keyword( "packageroot",**kwargs ):
         builddir = bdir
     else:
         homedir = create_homedir( **kwargs )

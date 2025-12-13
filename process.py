@@ -25,6 +25,11 @@ def error_abort( string,**kwargs ):
 def nonzero_env( envvar,**kwargs ):
     val = os.getenv( envvar,"" )
 
+def abort_on_null( val,msg,**kwargs ):
+    if nonnull( val ):
+        return val
+    else: raise Exception( f"Can not have null: {msg}" )
+
 def abort_on_zero_env( envvar,**kwargs ):
     try:
         val = os.environ[envvar]
