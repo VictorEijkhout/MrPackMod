@@ -44,10 +44,11 @@ def package_names( **kwargs ):
 # name of a logfile
 # 
 def logfile_name( logstage,**kwargs ):
-    logfilename = f"{logstage}"
+    scriptdir = abort_on_zero_keyword( "scriptdir",**kwargs )
+    logfilename = f"{scriptdir}/{logstage}"
     _,packageversion = package_names( **kwargs )
     logfilename += f"_{packageversion}"
-    system,compiler,cversion,cshortv,mpi,mversion = family_names()
+    system,compiler,cversion,cshortv,mpi,mversion = family_names( **kwargs )
     logfilename += f"_{compiler}-{cversion}"
     if mode := nonzero_keyword( "mode",**kwargs ):
         logfilename += f"_{mpi}-{mversion}"

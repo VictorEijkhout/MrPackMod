@@ -22,6 +22,8 @@ actions = arguments.actions
 if "install" in actions:
     index = actions.index("install")
     actions = actions[:index] + ["configure", "build", "module" ] + actions[index+1:]
+if tracing:
+    print( f"Actions: {actions}" )
 
 from MrPackMod import config 
 from MrPackMod import download

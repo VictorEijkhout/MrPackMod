@@ -11,7 +11,8 @@ import sys
 def echo_string( string,**kwargs ):
     if  terminal:= kwargs.get( "terminal",sys.stdout ):
         print( string,file=terminal )
-    for _,loghandle in kwargs.get("logfiles",{}).items():
+    for logname,loghandle in kwargs.get("logfiles",{}).items():
+        #print( f"log to {logname}: {string}" )
         print( string,file=loghandle )
 
 def trace_string( string,**kwargs ):
@@ -125,6 +126,7 @@ def process_execute( cmdline,**kwargs ):
     else: process = outside_process
     echo_string( f"Command line={cmdline}",**kwargs )
     process_input = process.stdin
+    process_output = process.stdout
     process_input.write( cmdline+"\n" )
     if outside_process:
         return ""

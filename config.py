@@ -30,6 +30,7 @@ def read_config(configfile,tracing=False):
                                ] if os.path.exists(rc) ]
     print( f"found rc files: {rc_files}" )
     configuration_dict = {
+        'scriptdir':os.getcwd(),
         'system':setting_from_env_or_rc(
             "SYSTEM","TACC_SYSTEM","UNKNOWN_SYSTEM",rc_files),
         # paths
@@ -54,7 +55,7 @@ def read_config(configfile,tracing=False):
     macros = {}
     with open(configfile,"r") as configuration_file:
         if tracing:
-            echo_string( "Read configuration: {configfile}" )
+            echo_string( f"Read configuration: {configfile}" )
         saving = False
         for line in configuration_file.readlines():
             line = line.strip()

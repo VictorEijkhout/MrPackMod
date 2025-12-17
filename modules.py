@@ -31,6 +31,9 @@ def test_modules( **kwargs ):
         if not nonnull(m):continue
         mod,ver = f"{m}/".split('/',maxsplit=1)
         mod = mod.lower(); ver=ver.strip("/")
+        if mod in [ "mkl", "nvpl", ] :
+            echo_string( "We have no proper test for mkl/nvpl",**kwargs )
+            continue
         echo_string( f"Test presence of module={mod} version={ver}" )
         if isnull( packdir := os.getenv( f"TACC_{mod.upper()}_DIR","" ) ):
             error = True
@@ -50,7 +53,8 @@ def test_modules( **kwargs ):
                                  **kwargs )
                     error = True
         except: continue
-    if error: sys.exit(1)
+    if error:
+        error_abort( "Errors during module testing",**kwargs )
 
 def module_help_string( **kwargs ):
     package,packageversion   = names.package_names( **kwargs )

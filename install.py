@@ -3,6 +3,7 @@
 #
 # standard python modules
 #
+import datetime
 import os
 import re
 import shutil
@@ -63,9 +64,13 @@ def export_flags( **kwargs ):
     return cmdline
 
 def open_logfile( logstage,kwargs ):
-    logfile = names.logfile_name( "cmake_configure",**kwargs )
+    logfile = names.logfile_name( logstage,**kwargs )
     loghandle = open( logfile,"w" )
     kwargs["logfiles"][logfile] = loghandle
+    echo_string( f"Open logfile {logfile}",**kwargs )
+    loghandle.write( f"""================
+Logstage {logstage} started {datetime.date.today()}
+================\n""" )
     return logfile,loghandle
 
 def close_logfile( logname,loghandle,kwargs ):
@@ -74,7 +79,7 @@ def close_logfile( logname,loghandle,kwargs ):
     
 def cmake_configure( **kwargs ):
     tracing = kwargs.get( "tracing" )
-    logfilename,logfilehandle = open_logfile( "configure_cmake",kwargs ) # note dict!
+    logfilename,logfilehandle = open_logfile( "configure",kwargs ) # note dict!
     srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #
     # flags
@@ -119,7 +124,7 @@ def cmake_configure( **kwargs ):
     close_logfile( logfilename,logfilehandle,kwargs )
 
 def cmake_build( **kwargs ):
-    logfilename,logfilehandle = open_logfile( "install_cmake",kwargs ) # note dict!
+    logfilename,logfilehandle = open_logfile( "install",kwargs ) # note dict!
     #
     # setup directories
     #
@@ -141,19 +146,19 @@ def cmake_build( **kwargs ):
         raise Exception( f"Invalid builddir: {builddir}",**kwargs )
     os.chdir( builddir )
     cmdline = f"{make} {makebuildtarget}"
-    process_execute( cmdline )
+    process_execute( cmdline,**kwargs )
     if extra_targets := nonzero_keyword( "extrabuildtargets" ):
         cmdline = f"{make} {extra_targets}"
         process_execute( cmdline )
     cmdline = f"{make} install"
-    process_execute( cmdline )
+    process_execute( cmdline,**kwargs )
     if extra_targets := nonzero_keyword( "extrainstalltargets" ):
         cmdline = f"{make} {extra_targets}"
         process_execute( cmdline )
     close_logfile( logfilename,logfilehandle,kwargs )
 
 def autotools_configure( **kwargs ):
-    logfilename,logfilehandle = open_logfile( "configure_autotools",kwargs ) # note dict!
+    logfilename,logfilehandle = open_logfile( "configure",kwargs ) # note dict!
     srcdir,builddir,prefixdir = configure_prep( **kwargs )
     #installext
     #
@@ -199,7 +204,7 @@ def autotools_configure( **kwargs ):
     close_logfile( logfilename,logfilehandle,kwargs )
     
 def autotools_build( **kwargs ):
-    logfilename,logfilehandle = open_logfile( "install_autotools",kwargs ) # note dict!
+    logfilename,logfilehandle = open_logfile( "install",kwargs ) # note dict!
     #
     # setup directories
     #
@@ -234,6 +239,8 @@ def autotools_build( **kwargs ):
 
 def write_module_file( **kwargs ):
     tracing = kwargs.get("tracing")
+    logfilename,logfilehandle = open_logfile( "module",kwargs ) # note dict!
+
     #
     # paths
     #
@@ -270,3 +277,4 @@ def write_module_file( **kwargs ):
         if tracing:
             echo_string( f"Module contents:\n{modulecontents}",**kwargs )
         modulefile.write( modulecontents )
+    close_logfile( logfilename,logfilehandle,kwargs )
