@@ -39,7 +39,7 @@ def mpm( args,**kwargs ):
         configuration[arg] = val
     configuration["logfiles"] = {} # name,handle pairs
     configuration["scriptdir"] = os.getcwd()
-    print(configuration)
+    #print(configuration)
     for action in args:
         print( f"Action: {action}" )
         if action=="help":

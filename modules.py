@@ -190,7 +190,8 @@ def dependencies( **kwargs ):
     if prereq := nonzero_keyword( "dependson",**kwargs ):
         if tracing:
             echo_string( f"depends on: {prereq}" )
-        depends += f"depends_on( \"{prereq}\" )\n"
+        for dep in prereq.split(" "):
+            depends += f"depends_on( \"{dep}\" )\n"
     if curreq  := nonzero_keyword( "dependsoncurrent",**kwargs ):
         version = abort_on_zero_env( f"TACC_{curreq.upper()}_VERSION" )
         if tracing:

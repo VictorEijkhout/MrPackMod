@@ -40,7 +40,7 @@ def read_config(configfile,tracing=False):
     rc_files = [ rc for rc in [ rc_name, f"../{rc_name}",
                                 f"{os.path.expanduser('~')}/{rc_name}" 
                                ] if os.path.exists(rc) ]
-    print( f"found rc files: {rc_files}" )
+    #print( f"found rc files: {rc_files}" )
     configuration_dict = {
         'scriptdir':os.getcwd(),
         'system':setting_from_env_or_rc(
