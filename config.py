@@ -16,9 +16,9 @@ def setting_from_env_or_rc( name,env,default,rc_files ):
         with open( file,"r" ) as rc:
             for line in rc.readlines():
                 line = line.strip()
-                if re.match( "\s*#",line ): continue
+                if re.match( r"\s*#",line ): continue
                 if re.match( name,line ):
-                    val = re.search( f"^\s*{name}\s*=\s*([A-Za-z0-9_]+)\s*$",line ).groups()[0]
+                    val = re.search( fr"^\s*{name}\s*=\s*([A-Za-z0-9_]+)\s*$",line ).groups()[0]
                     #print( f"found setting for {name}: {val}" )
                     return val
     return os.getenv( env,default )
@@ -26,7 +26,7 @@ def setting_from_env_or_rc( name,env,default,rc_files ):
 
 def environment_macros( **kwargs ):
     macros = {}
-    for module,_ in modules.loaded_modules( **kwargs ):
+    for module,_ in modules.loaded_modules( **kwargs,terminal=None ):
         #echo_string( f"investigate module: {module}",**kwargs )
         for ext in [ "dir", "inc", "lib", "bin", ]:
             macro = f"TACC_{module.upper()}_{ext.upper()}"

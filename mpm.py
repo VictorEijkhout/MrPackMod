@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser\
 parser.add_argument( '-j','--jcount',default='6' )
 parser.add_argument( '-t','--trace',action='store_true' )
 parser.add_argument(  '-c','--configuration',default="Configuration")
-parser.add_argument( 'actions', nargs='*', help="test configure build module, install=configure+build, module" )
+parser.add_argument( 'actions', nargs='*', help="test version configure build module, install=configure+build+module" )
 
 arguments  = parser.parse_args()
 configfile = arguments.configuration
@@ -41,11 +41,14 @@ def mpm( args,**kwargs ):
     configuration["scriptdir"] = os.getcwd()
     #print(configuration)
     for action in args:
-        print( f"Action: {action}" )
+        if tracing:
+            print( f"Action: {action}" )
         if action=="help":
             usage(program); sys.exit(0)
         elif action=="list":
             info.list_installations( **configuration )
+        elif action=="version":
+            print( configuration["packageversion"] )
         elif action=="test":
             modules.test_modules( **configuration )
         elif action=="download":
