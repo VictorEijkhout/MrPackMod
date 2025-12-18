@@ -18,6 +18,10 @@ from process import abort_on_zero_keyword,zero_keyword,nonzero_keyword,nonzero_k
 from process import abort_on_zero_env
 from process import process_execute
 
+def loaded_modules( **kwargs ):
+    name_version_list = process_execute( "module -t list 2>&1 | tr '\n' ' '",**kwargs ).split()
+    return [ f"{mv}/".split('/',1) for mv in name_version_list ]
+
 def test_modules( **kwargs ):
     tracing = kwargs.get( "tracing" )
     error = False

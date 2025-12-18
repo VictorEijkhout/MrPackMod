@@ -7,6 +7,7 @@ import os
 #
 # my modules
 #
+import modules
 from process import echo_string,nonnull,nonzero_env
 
 def setting_from_env_or_rc( name,env,default,rc_files ):
@@ -22,6 +23,17 @@ def setting_from_env_or_rc( name,env,default,rc_files ):
                     return val
     return os.getenv( env,default )
 
+
+def environment_macros( **kwargs ):
+    macros = {}
+    for module,_ in modules.loaded_modules( **kwargs ):
+        #echo_string( f"investigate module: {module}",**kwargs )
+        for ext in [ "dir", "inc", "lib", "bin", ]:
+            macro = f"TACC_{module.upper()}_{ext.upper()}"
+            if val := nonzero_env( macro,**kwargs ):
+                #echo_string( f"Macro {macro}: {val}",**kwargs )
+                macros[macro] = val
+    return macros
 
 def read_config(configfile,tracing=False):
     rc_name = ".mrpackmodrc"
@@ -52,7 +64,7 @@ def read_config(configfile,tracing=False):
         # default value:
         'buildsystem':"cmake", 
     }
-    macros = {}
+    macros = environment_macros( **configuration_dict )
     with open(configfile,"r") as configuration_file:
         if tracing:
             echo_string( f"Read configuration: {configfile}" )
