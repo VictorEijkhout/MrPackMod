@@ -63,6 +63,11 @@ def read_config(configfile,tracing=False):
             "MPIVERSION", "TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION",rc_files),
         # default value:
         'buildsystem':"cmake", 
+        # optional stuff
+        'installext':setting_from_env_or_rc\
+                        ( "INSTALLEXT", "INSTALLEXT", "",rc_files ),
+        'moduleversionextra':setting_from_env_or_rc\
+                        ( "MODULEVERSIONEXTRA", "MODULEVERSIONEXTRA", "",rc_files ),
     }
     macros = environment_macros( **configuration_dict )
     with open(configfile,"r") as configuration_file:

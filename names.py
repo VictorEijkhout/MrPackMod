@@ -44,12 +44,11 @@ def package_names( **kwargs ):
 # name of a logfile
 # 
 def logfile_name( logstage,**kwargs ):
-    scriptdir = abort_on_zero_keyword( "scriptdir",**kwargs )
-    logfilename = f"{scriptdir}/{logstage}"
-    _,packageversion = package_names( **kwargs )
-    logfilename += f"_{packageversion}"
+    scriptdir       = abort_on_zero_keyword( "scriptdir",**kwargs )
+    packagename,_   = package_names( **kwargs )
+    _,moduleversion = module_names( **kwargs )
     system,compiler,cversion,cshortv,mpi,mversion = family_names( **kwargs )
-    logfilename += f"_{compiler}-{cversion}"
+    logfilename = f"{scriptdir}/{logstage}_{packagename}-{moduleversion}_{compiler}-{cversion}"
     if mode := nonzero_keyword( "mode",**kwargs ):
         logfilename += f"_{mpi}-{mversion}"
     logfilename += ".log"
@@ -174,19 +173,20 @@ def prefixdir_name( **kwargs ):
         # path & "installation"
         if nonnull( idir:=kwargs.get("installroot","") ):
             trace_string( f"prefixdir from installroot: {idir}",**kwargs )
-            prefixdir = f"{idir}/installation"
+            prefixpath = f"{idir}"
         else: 
             hdir = create_homedir( **kwargs )
             trace_string( f"prefixdir from homedir: {hdir}",**kwargs )
-            prefixdir = f"{hdir}/installation"
+            prefixpath = f"{hdir}"
         # attach package name
+        prefixdir = "installation"
         if nonnull( mname:=kwargs.get("modulename","") ):
-            prefixdir = f"{prefixdir}-{mname}"
+            prefixdir += f"-{mname}"
         else:
-            prefixdir = f"{prefixdir}-{package}"
+            prefixdir += f"-{package}"
         # install extension
-        installext = install_extension( **kwargs )
-        prefixdir = f"{prefixdir}-{installext}"
+        prefixdir += "-"+install_extension( **kwargs )
+        prefixdir = f"{prefixpath}/{prefixdir}"
     if not nonnull( prefixdir ):
         raise Exception( "failed to set prefixdir" )
     if nonnull( var := kwargs.get("installvariant","") ):
