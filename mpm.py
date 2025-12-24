@@ -12,13 +12,17 @@ parser.add_argument( '-j','--jcount',default='6' )
 parser.add_argument( '-t','--trace',action='store_true',default=False )
 parser.add_argument( '-c','--configuration',default="Configuration")
 parser.add_argument( '-d','--dependencies',action='store_true',default=False )
-parser.add_argument( 'actions', nargs='*', help="test version configure build module dependencies, install=configure+build+module" )
+parser.add_argument( '-f','--find_string',action='store_true',default=False )
+parser.add_argument( '-A','--args',default="" )
+parser.add_argument( 'actions', nargs='*', help="test version configure build module dependencies findstring, install=configure+build+module" )
 
-arguments  = parser.parse_args()
-configfile = arguments.configuration
+arguments = parser.parse_args()
+configfile   = arguments.configuration
 dependencies = arguments.dependencies
-jcount     = arguments.jcount
-tracing    = arguments.trace
+find_string  = arguments.find_string
+jcount       = arguments.jcount
+tracing      = arguments.trace
+command_arguments = arguments.args
 
 actions = arguments.actions
 if tracing:
@@ -48,6 +52,14 @@ def mpm( args,**kwargs ):
         # auxiliaries
         elif action=="dependencies":
             print( configuration['modules'] )
+        elif action=="find_string":
+            if args := process.nonnull( command_arguments ):
+                srcdir = names.srcdir_name( **configuration )
+                process.process_execute\
+                    ( f"find {srcdir} -type f -exec grep "+command_arguments+" {} \; -print",
+                      **configuration )
+            else:
+                echo_string( f"WARNING: find_string command needs --args",**configuration )
         elif action=="list":
             info.list_installations( **configuration )
         elif action=="test":
@@ -68,7 +80,7 @@ def mpm( args,**kwargs ):
                 elif system == "autotools":
                     install.autotools_configure( **configuration )
                 else: raise Exception( f"Can only configure for cmake and autotools, not: {system}" )
-            if action in [ "install""build", ]:
+            if action in [ "install", "build", ]:
                 if ( system := configuration["buildsystem"].lower() ) == "cmake":
                     install.cmake_build( **configuration )
                 elif system == "autotools":

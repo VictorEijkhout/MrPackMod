@@ -229,8 +229,10 @@ def autotools_build( **kwargs ):
     #
     jval = kwargs.get("jcount",6)
     makecommand = f"make --no-print-directory -j {jval}"
+    echo_string( f"Making default target with: {makecommand}",**kwargs )
     process_execute( makecommand,**kwargs )
     if extra := nonzero_keyword( "extrabuildtargets",**kwargs ):
+        echo_string( f" .. making extra targets: {extra}",**kwargs )
         process_execute( f"{makecommand} {extra}",**kwargs )
     #
     # install

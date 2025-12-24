@@ -70,6 +70,8 @@ def read_config(configfile,tracing=False):
                         ( "MODULEVERSIONEXTRA", "MODULEVERSIONEXTRA", "",rc_files ),
     }
     macros = environment_macros( **configuration_dict )
+    if not os.path.exists(configfile):
+        raise Exception( f"No config file <<{configfile}>> in dir {os.getcwd()}" )
     with open(configfile,"r") as configuration_file:
         if tracing:
             echo_string( f"Read configuration: {configfile}" )
