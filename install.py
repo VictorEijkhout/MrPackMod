@@ -100,8 +100,14 @@ def cmake_configure( **kwargs ):
         buildsharedlibs = "OFF"
     else: buildsharedlibs = "ON"
     if nonnull( source := kwargs.get("cmakesubdir") ):
-        cmakesourcedir = f"-S {srcdir}/{source} -B {builddir}"
-    else: cmakesourcedir = f"{srcdir}"
+        cmakesourcesetting = f"-S {srcdir}/{source} -B {builddir}"
+        settingsfile = f"{srcdir}/{source}/CMakeLists.txt"
+    else:
+        cmakesourcesetting = f"{srcdir}"
+        settingsfile = f"{cmakesourcesetting}/CMakeLists.txt"
+    if not os.path.exists( f"{settingsfile}" ):
+        raise Exception( f"Can not find file: {settingsfile}" )
+    
     #
     # execute cmake
     #
@@ -117,7 +123,7 @@ def cmake_configure( **kwargs ):
 -D BUILD_SHARED_LIBS={buildsharedlibs} \
 -D CMAKE_BUILD_TYPE={cmakebuildtype} \
 {cmakeflags} {cmakeflagsplatform} \
-{cmakesourcedir} \
+{cmakesourcesetting} \
 "
     process_execute( cmdline,**kwargs,process=shell )
     process_terminate( shell,**kwargs )
