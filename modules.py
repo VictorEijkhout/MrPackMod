@@ -23,6 +23,7 @@ def loaded_modules( **kwargs ):
         ( "module -t list 2>&1 | tr '\n' ' '",**kwargs ).split()
     return [ f"{mv}/".split('/',1) for mv in name_version_list ]
 
+non_packages = [ "mkl","nvpl","blaslapack", "mpi", ]
 def test_modules( **kwargs ):
     tracing = kwargs.get( "tracing" )
     error = False
@@ -36,8 +37,8 @@ def test_modules( **kwargs ):
         if not nonnull(m):continue
         mod,ver = f"{m}/".split('/',maxsplit=1)
         mod = mod.lower(); ver=ver.strip("/")
-        if mod in [ "mkl", "nvpl", ] :
-            echo_string( "We have no proper test for mkl/nvpl",**kwargs )
+        if mod in non_packages:
+            echo_string( f"Skip test for non-package: {mod}",**kwargs )
             continue
         echo_string( f"Test presence of module={mod} version={ver}" )
         if isnull( packdir := os.getenv( f"TACC_{mod.upper()}_DIR","" ) ):

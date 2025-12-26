@@ -232,11 +232,9 @@ def modulefile_path_and_name( **kwargs ):
         if ( mode := kwargs.get("mode","mode_not_found") ) == "core":
             modulepath += f"/Core"
         else:
-            compilercode = abort_on_zero_keyword( "compiler",**kwargs )
-            compilerversion = abort_on_zero_keyword( "compilerversion",**kwargs )
+            # ignore system & compiler short version
+            _,compilercode,compilerversion,_,mpicode,mpiversion = family_names( **kwargs )
             if mode in [ "mpi","hybrid", ]:
-                mpicode = abort_on_zero_keyword( "mpi",**kwargs )
-                mpiversion = abort_on_zero_keyword( "mpiversion",**kwargs )
                 modulepath += f"/MPI/{compilercode}/{compilerversion}/{mpicode}/{mpiversion}"
             elif mode in [ "seq","omp", ]:
                 modulepath += f"/Compiler/{compilercode}/{compilerversion}"

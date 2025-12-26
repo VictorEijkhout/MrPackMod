@@ -102,7 +102,7 @@ def process_terminate( process,**kwargs ):
     process_input = process.stdin
     process_input.flush()
     process_input.close()
-    echo_string( "Output:",**kwargs )
+    #echo_string( "Output:",**kwargs )
     lastline = ""
     while True:
         line = process.stdout.readline()
@@ -112,13 +112,14 @@ def process_terminate( process,**kwargs ):
         if line != "":
             echo_string( line,**kwargs )
             lastline = line
-    echo_string( " .. end of output",**kwargs )
+    #echo_string( " .. end of output",**kwargs )
     process.wait()
     return lastline
 
 def process_execute( cmdline,**kwargs ):
     outside_process = kwargs.get("process",None)
-    logfile = kwargs.get("logfile",None)
+    immediate       = kwargs.get("immediate",None)
+    logfile         = kwargs.get("logfile",None)
     if logfile is None:
         logfile = sys.stdout
     if outside_process is None:
@@ -128,6 +129,8 @@ def process_execute( cmdline,**kwargs ):
     process_input = process.stdin
     process_output = process.stdout
     process_input.write( cmdline+"\n" )
+    if immediate:
+        process_input.flush()
     if outside_process:
         return ""
     else:

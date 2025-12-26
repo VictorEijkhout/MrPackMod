@@ -62,7 +62,7 @@ def read_config(configfile,tracing=False):
         'mpiversion':setting_from_env_or_rc(
             "MPIVERSION", "TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION",rc_files),
         # default value:
-        'buildsystem':"cmake", 
+        'buildsystem':"cmake", 'modules':"",
         # optional stuff
         'installext':setting_from_env_or_rc\
                         ( "INSTALLEXT", "INSTALLEXT", "",rc_files ),
