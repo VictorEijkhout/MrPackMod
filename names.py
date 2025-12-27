@@ -153,7 +153,7 @@ def srcdir_name( **kwargs ):
 
 def builddir_name( **kwargs ):
     if bdir := nonzero_keyword( "builddirroot",**kwargs ):
-        buildir = bdir
+        builddir = bdir
     elif bdir := nonzero_keyword( "packageroot",**kwargs ):
         builddir = bdir
     else:
