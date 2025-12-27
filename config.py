@@ -122,6 +122,8 @@ def read_config(configfile,tracing=False):
             "BUILDDIRROOT", "BUILDDIRROOT","",rc_files ),
         'moduleroot':setting_from_env_or_rc(
             "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files ),
+        'moduledir':setting_from_env_or_rc(
+            "MODULEDIR", "MODULEDIR","",rc_files ),
         # compiler
         'compiler':setting_from_env_or_rc(
             "COMPILER", "TACC_FAMILY_COMPILER","UNKNOWN_COMPILER",rc_files ),

@@ -225,7 +225,7 @@ def modulefile_path_and_name( **kwargs ):
     #
     # construct module path
     #
-    if nonnull( dirset := kwargs.get("moduledirset") ):
+    if nonnull( dirset := kwargs.get("moduledir") ):
         # in jail we get an explicit path
         modulepath = dirset
     else:
