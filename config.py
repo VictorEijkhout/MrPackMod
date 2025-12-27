@@ -8,7 +8,7 @@ import os
 # my modules
 #
 import modules
-from process import echo_string,nonnull,nonzero_env
+from process import echo_string,nonnull,nonzero_env,abort_on_zero_keyword
 
 def setting_from_env_or_rc( name,env,default,rc_files ):
     val = ""
@@ -23,6 +23,21 @@ def setting_from_env_or_rc( name,env,default,rc_files ):
                     return val
     return os.getenv( env,default )
 
+def config_from_rc_files( config_dict,macros ):
+    system   = abort_on_zero_keyword( "system",**config_dict )
+    compiler = abort_on_zero_keyword( "compiler",**config_dict )
+    rc_dir = f"{os.getcwd()}/.."
+    if not os.path.isdir(rc_dir):
+        raise Exception( f"Non-existing dir for rc files: {rc_dir}" )
+    rc0 = f".mrpackmod_{system}_{compiler}rc"
+    rc1 = f".mrpackmod_{compiler}rc"
+    rc0 = f".mrpackmod_{system}rc"
+    if os.path.exists( f"{rc_dir}/{rc0}" ):
+        add_settings_from_config( f"{rc_dir}/{rc0}",config_dict,macros )
+    elif os.path.exists( f"{rc_dir}/{rc1}" ):
+        add_settings_from_config( f"{rc_dir}/{rc1}",config_dict,macros )
+    elif os.path.exists( f"{rc_dir}/{rc2}" ):
+        add_settings_from_config( f"{rc_dir}/{rc2}",config_dict,macros )
 
 def environment_macros( **kwargs ):
     macros = {}
@@ -35,43 +50,8 @@ def environment_macros( **kwargs ):
                 macros[macro] = val
     return macros
 
-def read_config(configfile,tracing=False):
-    rc_name = ".mrpackmodrc"
-    rc_files = [ rc for rc in [ rc_name, f"../{rc_name}",
-                                f"{os.path.expanduser('~')}/{rc_name}" 
-                               ] if os.path.exists(rc) ]
-    #print( f"found rc files: {rc_files}" )
-    configuration_dict = {
-        'scriptdir':os.getcwd(),
-        'system':setting_from_env_or_rc(
-            "SYSTEM","TACC_SYSTEM","UNKNOWN_SYSTEM",rc_files),
-        # paths
-        'packageroot':setting_from_env_or_rc(
-            "PACKAGEROOT", "PACKAGEROOT","NO_PACKAGE_ROOT_GIVEN",rc_files),
-        'installroot':setting_from_env_or_rc(
-            "INSTALLROOT", "INSTALLROOT","NO_INSTALLROOT_GIVEN",rc_files),
-        'moduleroot':setting_from_env_or_rc(
-            "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files),
-        # compiler
-        'compiler':setting_from_env_or_rc(
-            "COMPILER", "TACC_FAMILY_COMPILER","UNKNOWN_COMPILER",rc_files),
-        'compilerversion':setting_from_env_or_rc(
-            "COMPILERVERSION", "TACC_FAMILY_COMPILER_VERSION","UNKNOWN_COMPILER_VERSION",rc_files),
-        'mpi':setting_from_env_or_rc(
-            "MPI", "TACC_FAMILY_MPI","UNKNOWN_MPI",rc_files),
-        'mpiversion':setting_from_env_or_rc(
-            "MPIVERSION", "TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION",rc_files),
-        # default value:
-        'buildsystem':"cmake", 'modules':"",
-        # optional stuff
-        'installext':setting_from_env_or_rc\
-                        ( "INSTALLEXT", "INSTALLEXT", "",rc_files ),
-        'moduleversionextra':setting_from_env_or_rc\
-                        ( "MODULEVERSIONEXTRA", "MODULEVERSIONEXTRA", "",rc_files ),
-    }
-    macros = environment_macros( **configuration_dict )
-    if not os.path.exists(configfile):
-        raise Exception( f"No config file <<{configfile}>> in dir {os.getcwd()}" )
+def add_settings_from_config( configfile,configuration_dict,macros ):
+    tracing = configuration_dict.get("tracing",False)
     with open(configfile,"r") as configuration_file:
         if tracing:
             echo_string( f"Read configuration: {configfile}" )
@@ -116,6 +96,50 @@ def read_config(configfile,tracing=False):
                 configuration_dict[key] = val
                 if tracing:
                     echo_string( f"Setting: {key} = {val} from config" )
+
+def read_config(configfile,tracing=False):
+    rc_name = ".mrpackmodrc"
+    rc_files = [ rc for rc in [ rc_name, f"../{rc_name}",
+                                f"{os.path.expanduser('~')}/{rc_name}" 
+                               ] if os.path.exists(rc) ]
+    #print( f"found rc files: {rc_files}" )
+    configuration_dict = {
+        'scriptdir':os.getcwd(),
+        'system':setting_from_env_or_rc(
+            "SYSTEM","TACC_SYSTEM","UNKNOWN_SYSTEM",rc_files),
+        # paths
+        'homedir':setting_from_env_or_rc(
+            "HOMEDIR", "HOMEDIR", "NO_HOMEDIR_GIVEN",rc_files ),
+        'packageroot':setting_from_env_or_rc(
+            "PACKAGEROOT", "PACKAGEROOT","NO_PACKAGEROOT_GIVEN",rc_files ),
+        'installroot':setting_from_env_or_rc(
+            "INSTALLROOT", "INSTALLROOT","NO_INSTALLROOT_GIVEN",rc_files ),
+        'installpath':setting_from_env_or_rc(
+            "INSTALLPATH", "INSTALLPATH","NO_INSTALLPATH_GIVEN",rc_files ),
+        'moduleroot':setting_from_env_or_rc(
+            "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files ),
+        # compiler
+        'compiler':setting_from_env_or_rc(
+            "COMPILER", "TACC_FAMILY_COMPILER","UNKNOWN_COMPILER",rc_files ),
+        'compilerversion':setting_from_env_or_rc(
+            "COMPILERVERSION", "TACC_FAMILY_COMPILER_VERSION","UNKNOWN_COMPILER_VERSION",rc_files ),
+        'mpi':setting_from_env_or_rc(
+            "MPI", "TACC_FAMILY_MPI","UNKNOWN_MPI",rc_files ),
+        'mpiversion':setting_from_env_or_rc(
+            "MPIVERSION", "TACC_FAMILY_MPI_VERSION","UNKNOWN_MPI_VERSION",rc_files ),
+        # default value:
+        'buildsystem':"cmake", 'modules':"",
+        # optional stuff
+        'installext':setting_from_env_or_rc\
+                        ( "INSTALLEXT", "INSTALLEXT", "",rc_files ),
+        'moduleversionextra':setting_from_env_or_rc\
+                        ( "MODULEVERSIONEXTRA", "MODULEVERSIONEXTRA", "",rc_files ),
+    }
+    macros = environment_macros( **configuration_dict )
+    config_from_rc_files( configuration_dict,macros )
+    if not os.path.exists(configfile):
+        raise Exception( f"No config file <<{configfile}>> in dir {os.getcwd()}" )
+    add_settings_from_config( configfile,configuration_dict,macros )
     if tracing:
         print(configuration_dict)
     return configuration_dict
