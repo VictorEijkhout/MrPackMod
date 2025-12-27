@@ -152,7 +152,9 @@ def srcdir_name( **kwargs ):
     return f"{downloaddir}/{srcdir_local}"
 
 def builddir_name( **kwargs ):
-    if bdir := nonzero_keyword( "packageroot",**kwargs ):
+    if bdir := nonzero_keyword( "builddirroot",**kwargs ):
+        buildir = bdir
+    elif bdir := nonzero_keyword( "packageroot",**kwargs ):
         builddir = bdir
     else:
         homedir = create_homedir( **kwargs )

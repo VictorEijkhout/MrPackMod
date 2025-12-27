@@ -116,6 +116,8 @@ def read_config(configfile,tracing=False):
             "INSTALLROOT", "INSTALLROOT","NO_INSTALLROOT_GIVEN",rc_files ),
         'installpath':setting_from_env_or_rc(
             "INSTALLPATH", "INSTALLPATH","NO_INSTALLPATH_GIVEN",rc_files ),
+        'builddirroot':setting_from_env_or_rc(
+            "BUILDDIRROOT", "BUILDDIRROOT","NO_BUILDDIRROOT_GIVEN",rc_files ),
         'moduleroot':setting_from_env_or_rc(
             "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files ),
         # compiler
