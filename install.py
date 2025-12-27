@@ -30,7 +30,7 @@ def configure_prep( **kwargs ):
     try:
         shutil.rmtree(builddir)
     except FileNotFoundError: pass
-    os.mkdir(builddir)
+    os.makedirs(builddir,exist_ok=True)
     return srcdir,builddir,prefixdir
 
 def export_compilers( **kwargs ):

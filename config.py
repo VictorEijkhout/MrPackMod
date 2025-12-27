@@ -31,7 +31,7 @@ def config_from_rc_files( config_dict,macros ):
         raise Exception( f"Non-existing dir for rc files: {rc_dir}" )
     rc0 = f".mrpackmod_{system}_{compiler}rc"
     rc1 = f".mrpackmod_{compiler}rc"
-    rc0 = f".mrpackmod_{system}rc"
+    rc2 = f".mrpackmod_{system}rc"
     if os.path.exists( f"{rc_dir}/{rc0}" ):
         add_settings_from_config( f"{rc_dir}/{rc0}",config_dict,macros )
     elif os.path.exists( f"{rc_dir}/{rc1}" ):
@@ -115,9 +115,9 @@ def read_config(configfile,tracing=False):
         'installroot':setting_from_env_or_rc(
             "INSTALLROOT", "INSTALLROOT","NO_INSTALLROOT_GIVEN",rc_files ),
         'installpath':setting_from_env_or_rc(
-            "INSTALLPATH", "INSTALLPATH","NO_INSTALLPATH_GIVEN",rc_files ),
+            "INSTALLPATH", "INSTALLPATH","",rc_files ),
         'builddirroot':setting_from_env_or_rc(
-            "BUILDDIRROOT", "BUILDDIRROOT","NO_BUILDDIRROOT_GIVEN",rc_files ),
+            "BUILDDIRROOT", "BUILDDIRROOT","",rc_files ),
         'moduleroot':setting_from_env_or_rc(
             "MODULEROOT", "MODULEROOT","NO_MODULEROOT_GIVEN",rc_files ),
         # compiler
