@@ -222,12 +222,15 @@ def package_dir_names( **kwargs ):
 
 def modulefile_path_and_name( **kwargs ):
     abort_on_nonzero_env( "MODULEDIRSET" )
+    package,packageversion = package_names( **kwargs )
+    modulename,moduleversion = module_names( **kwargs )
     #
     # construct module path
     #
     if nonnull( dirset := kwargs.get("moduledir") ):
         # in jail we get an explicit path
         modulepath = dirset
+        return f"{modulepath}",f"{moduleversion}.lua"
     else:
         # otherwise we build the path from system & compiler info
         modulepath = abort_on_zero_keyword( "moduleroot",**kwargs )
@@ -241,12 +244,7 @@ def modulefile_path_and_name( **kwargs ):
             elif mode in [ "seq","omp", ]:
                 modulepath += f"/Compiler/{compilercode}/{compilerversion}"
             else: error_abort( f"Unknown mode: {mode}" )
-    #
-    # attach package name
-    #
-    package,packageversion = package_names( **kwargs )
-    modulename,moduleversion = module_names( **kwargs )
-    return f"{modulepath}/{modulename}",f"{moduleversion}.lua"
+        return f"{modulepath}/{modulename}",f"{moduleversion}.lua"
 
 def module_names( **kwargs):
     package,packageversion = package_names( **kwargs )
