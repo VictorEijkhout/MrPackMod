@@ -110,6 +110,8 @@ def read_config(configfile,tracing=False):
         # paths
         'homedir':setting_from_env_or_rc(
             "HOMEDIR", "HOMEDIR", "NO_HOMEDIR_GIVEN",rc_files ),
+        'srcpath':setting_from_env_or_rc(
+            "SRCPATH", "SRCPATH", "",rc_files ),
         'packageroot':setting_from_env_or_rc(
             "PACKAGEROOT", "PACKAGEROOT","NO_PACKAGEROOT_GIVEN",rc_files ),
         'installroot':setting_from_env_or_rc(
